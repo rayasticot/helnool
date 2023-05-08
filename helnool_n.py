@@ -6,6 +6,7 @@ from pathfinding.core.diagonal_movement import DiagonalMovement
 from pathfinding.core.grid import Grid
 from pathfinding.finder.a_star import AStarFinder
 from pynput import keyboard
+from pynput.mouse import Button, Controller
 import simpleaudio as sa
 import yaml
 
@@ -25,6 +26,9 @@ levelIndex = ("map/map_tuto.yaml", "map/map_lobby.yaml", "map/map_map1.yaml")
 quality = 0
 limit_fps = True
 
+mouse = Controller()
+mouse.position = (800, 800)
+
 
 def on_press(key):
     global k_up
@@ -33,18 +37,20 @@ def on_press(key):
     global k_le
     global k_en
     global k_sf
-    if key == keyboard.Key.up:
-        k_up = 1
-    elif key == keyboard.Key.down:
-        k_dw = 1
-    elif key == keyboard.Key.right:
-        k_rg = 1
-    elif key == keyboard.Key.left:
-        k_le = 1
-    elif key == keyboard.Key.space:
-        k_en = 1
-    elif key == keyboard.Key.shift:
-        k_sf = 1
+    try:
+        if key.char == "w" or key.char == "W":
+            k_up = 1
+        elif key.char == "s" or key.char == "S":
+            k_dw = 1
+        elif key.char == "d" or key.char == "D":
+            k_rg = 1
+        elif key.char == "a" or key.char == "A":
+            k_le = 1
+    except AttributeError:
+        if key == keyboard.Key.space:
+            k_en = 1
+        elif key == keyboard.Key.shift:
+            k_sf = 1
 
  
 def on_release(key):
@@ -54,18 +60,20 @@ def on_release(key):
     global k_le
     global k_en
     global k_sf
-    if key == keyboard.Key.up:
-        k_up = 0
-    elif key == keyboard.Key.down:
-        k_dw = 0
-    elif key == keyboard.Key.right:
-        k_rg = 0
-    elif key == keyboard.Key.left:
-        k_le = 0
-    elif key == keyboard.Key.space:
-        k_en = 0
-    elif key == keyboard.Key.shift:
-        k_sf = 0
+    try:
+        if key.char == "w" or key.char == "W":
+            k_up = 0
+        elif key.char == "s" or key.char == "S":
+            k_dw = 0
+        elif key.char == "d" or key.char == "D":
+            k_rg = 0
+        elif key.char == "a" or key.char == "A":
+            k_le = 0
+    except AttributeError:
+        if key == keyboard.Key.space:
+            k_en = 0
+        elif key == keyboard.Key.shift:
+            k_sf = 0
 
 
 def createimage(console, name, y, x):
@@ -165,6 +173,13 @@ shot_play = shot.play()
 shot_play.stop()
 arrive_play = arrive.play()
 arrive_play.stop()
+
+
+def normalize(vector):
+    norme = math.sqrt(vector[0]**2 + vector[1]**2)
+    if norme == 0:
+        return 0, 0
+    return vector[0]/norme, vector[1]/norme
 
 
 def frame(console, map, posX, posY, angle):
@@ -317,28 +332,42 @@ def player(console, map, posx, posy, angle, sprintlevel, maxsprintlevel):
     else:
         if sprintlevel < maxsprintlevel:
             sprintlevel += 0.25
-    
-    pdir = (math.cos(math.radians(angle))*3*dt*sprintcoef, math.sin(math.radians(angle))*3*dt*sprintcoef)
-    if k_le == 1:
-        angle += 90*dt
-    if k_rg == 1:
-        angle -= 90*dt
+
+    mouseMoveX = mouse.position[0]-800
+    mouse.position = (800, 400)
+
+    pdir = (math.cos(math.radians(angle)), math.sin(math.radians(angle)))
+    rdir = (math.cos(math.radians(angle+90)), math.sin(math.radians(angle+90)))
+    angle -= mouseMoveX*0.05
+
+    addX, addY = 0, 0
+
     if k_dw == 1:
-        posx -= pdir[0]
-        posy -= pdir[1]
-        if map[int(posy)][int(posx)] == 10:
-            touchElevator = True
-        if map[int(posy)][int(posx)] > 0:
-            posx += pdir[0]
-            posy += pdir[1]
+        addX -= pdir[0]
+        addY -= pdir[1]
     if k_up == 1:
-        posx += pdir[0]
-        posy += pdir[1]
-        if map[int(posy)][int(posx)] == 10:
-            touchElevator = True
-        if map[int(posy)][int(posx)] > 0:
-            posx -= pdir[0]
-            posy -= pdir[1]
+        addX += pdir[0]
+        addY += pdir[1]
+    if k_rg == 1:
+        addX -= rdir[0]
+        addY -= rdir[1]
+    if k_le == 1:
+        addX += rdir[0]
+        addY += rdir[1]
+
+    addX, addY = normalize((addX, addY))
+    addX *= 3*dt*sprintcoef
+    addY *= 3*dt*sprintcoef
+
+    posx += addX
+    posy += addY
+    
+    if map[int(posy)][int(posx)] == 10:
+        touchElevator = True
+    if map[int(posy)][int(posx)] > 0:
+        posx -= addX
+        posy -= addY
+    
     angle = angle % 360
     """
     if int(posx) == 54 and int(posy) == 40 and spr_list[0][5] != 5:
