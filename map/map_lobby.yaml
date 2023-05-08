@@ -1,4 +1,8 @@
 map_data_file: "map/lobby.legba" # Fichier LEGBA contenant les données de la map
+key_pool: [ # Liste des clés avec leur position qui peuvent spawn. Une seul clé va spawn par ligne.
+  [[18.5, 14.5],],
+  [[14, 4.5],],
+]
 map_spr_list: # Liste de sprites de la map sans compter le monstre et les clés
   - pos_x: 229 # Position X du sprite dans le monde
     pos_y: 229 # Position Y du sprite dans le monde
@@ -7,9 +11,11 @@ map_spr_list: # Liste de sprites de la map sans compter le monstre et les clés
     pos_y: 229
     spr: 3
 player_spawn_point: # Position de spawn du joueur
-  pos_x: 8
-  pos_y: 8
+  pos_x: 7
+  pos_y: 15.5
+  angle: 0
 monstre_spawn_point: # Position de spawn du monstre
   pos_x: 229
   pos_y: 229
 monstre_spawn_time: -1 # Temps avant que le monstre spawn (secondes)
+level_id: 1

@@ -18,6 +18,10 @@ LEVEL_LIST = ("map/map_default.yaml")
 dt = 0
 k_up, k_dw, k_rg, k_le, k_en, k_sf = 0, 0, 0, 0, 0, 0
 
+levelCompletion = [False, False, False, False, False ,False, False, False, False, False]
+levelUnlock = [True, True, True, False, False, False, False, False, False, False]
+levelIndex = ("map/map_tuto.yaml", "map/map_lobby.yaml", "map/map_map1.yaml")
+
 quality = 0
 limit_fps = True
 
@@ -132,15 +136,18 @@ concrete = loadtexture("img/concrete.legba")
 concrete_d = loadtexture("img/concrete_d.legba")
 box = loadtexture("img/box.legba")
 box_d = loadtexture("img/box_d.legba")
+door = loadtexture("img/door.legba")
 peur1 = loadtexture("img/mons1.legba")
 peur2 = loadtexture("img/mons2.legba")
 peur3 = loadtexture("img/mons3.legba")
 peur4 = loadtexture("img/mons4.legba")
 cle = loadtexture("img/cle.legba")
 gun = loadtexture("img/gun.legba")
-text_index = ((brique, brique_d), (toile, toile_d), (herb, herb_d), (filet, filet), (eye, eye_d), (labo, labo_d), (concrete, concrete_d), (box, box_d), (samsung, samsung_d), (keyhole, keyhole))
+courir = loadtexture("img/courir.legba")
+retour = loadtexture("img/retour.legba")
+text_index = ((brique, brique_d), (toile, toile_d), (herb, herb_d), (filet, filet), (eye, eye_d), (labo, labo_d), (concrete, concrete_d), (box, box_d), (samsung, samsung_d), (keyhole, keyhole), (door, door))
 simp_index = ((160, 124), (223, 180), (238, 237), (249, 239), (70, 71), (160, 124), (223, 180), (238, 237), (249, 239), (70, 71))
-sprite_tex_index = (peur1, peur2, peur3, cle, gun, peur4)
+sprite_tex_index = (peur1, peur2, peur3, cle, gun, peur4, courir, retour)
 
 ganiouproche = sa.WaveObject.from_wave_file("snd/ganiou_proche.wav")
 ganiou = sa.WaveObject.from_wave_file("snd/ganiou.wav")
@@ -273,6 +280,8 @@ def drawsprite(console, sprite_list, posX, posY, angle, scr_dist):
         screen_spr_list.append([scr_x, scr_y, scale, sprite_loc_list[i][3], sprite_loc_list[i][5]])
     
     for sprite in screen_spr_list:
+        if sprite[2] > 400:
+            continue
         for col in range(sprite[2]):
             for lin in range(sprite[2]):
                 if lin+sprite[1] in range(SY) and col+sprite[0] in range(SX):
@@ -296,6 +305,7 @@ def player(console, map, posx, posy, angle, sprintlevel, maxsprintlevel):
     """
 
     sprintcoef = 1
+    touchElevator = False
     if k_sf == 1 and (k_up == 1 or k_dw == 1):
         sprintcoef = 2
         if sprintlevel > 0:
@@ -316,13 +326,17 @@ def player(console, map, posx, posy, angle, sprintlevel, maxsprintlevel):
     if k_dw == 1:
         posx -= pdir[0]
         posy -= pdir[1]
-        if map[int(posy)][int(posx)] > 0 and (map[int(posy)][int(posx)] < 10 or key_number < 4):
+        if map[int(posy)][int(posx)] == 10:
+            touchElevator = True
+        if map[int(posy)][int(posx)] > 0:
             posx += pdir[0]
             posy += pdir[1]
     if k_up == 1:
         posx += pdir[0]
         posy += pdir[1]
-        if map[int(posy)][int(posx)] > 0 and (map[int(posy)][int(posx)] < 10  or key_number < 4):
+        if map[int(posy)][int(posx)] == 10:
+            touchElevator = True
+        if map[int(posy)][int(posx)] > 0:
             posx -= pdir[0]
             posy -= pdir[1]
     angle = angle % 360
@@ -339,7 +353,7 @@ def player(console, map, posx, posy, angle, sprintlevel, maxsprintlevel):
         if ganiouproche_play.is_playing() == True:
             ganiouproche_play.stop()
     """
-    return posx, posy, angle, sprintlevel, maxsprintlevel
+    return posx, posy, angle, sprintlevel, maxsprintlevel, touchElevator
 
 
 def monster(console, monx, mony, posx, posy, mon_index, chemin, path, oldpx, oldpy, monsterspeed, anim_num, spr_list):
@@ -486,16 +500,90 @@ def timerUpdate(console, timerValue):
     createDigitSprite(console, minutes, seconds)
 
 
+def brouillage(console, seconds, helnool):
+    musique = sa.WaveObject.from_wave_file("snd/brouille.wav")
+    play = musique.play()
+    t1 = time.time()
+    while time.time()-t1 < seconds:
+        for col in range(SY):
+            for lin in range(SX):
+                pixcolor = random.randrange(231, 255)
+                console.addch(col, lin, " ", curses.color_pair(pixcolor))
+        if helnool == True:
+            createimage(console, "img/helnool.legba", 0, 55)
+        console.refresh()
+    if play.is_playing():
+        play.stop()
+
+
+def createCheckElevator(console):
+    XPOS = (26, 136)
+    YPOS = (80, 63, 46, 29, 12)
+
+    for i in range(len(levelCompletion)):
+        if levelCompletion[i] == True:
+            createimage(console, "img/check.legba", YPOS[i%len(YPOS)], XPOS[int(i/len(YPOS))]+73)
+        if levelUnlock[i] == False:
+            createimage(console, "img/warning.legba", YPOS[i%len(YPOS)], XPOS[int(i/len(YPOS))])
+
+
+def elevator(console):
+    global k_up
+    global k_dw
+    global k_rg
+    global k_le
+    XPOS = (26, 136)
+    YPOS = (80, 63, 46, 29, 12)
+    arrowIndex = 1
+    arrowSpriteX = XPOS[0]-20
+    arrowSpriteY = YPOS[1]
+    brouillage(console, 0.25, False)
+    while 1:
+        createimage(console, "img/elevatorbg.legba", 0, 0)
+        createCheckElevator(console)
+
+        if k_up == 1:
+            k_up = 0
+            arrowIndex += 1
+            arrowIndex %= len(XPOS)*len(YPOS)
+        
+        if k_dw == 1:
+            k_dw = 0
+            arrowIndex -= 1
+            arrowIndex %= len(XPOS)*len(YPOS)
+
+        if k_rg == 1:
+            k_rg = 0
+            arrowIndex += len(YPOS)
+            arrowIndex %= len(XPOS)*len(YPOS)
+        
+        if k_le == 1:
+            k_le = 0
+            arrowIndex -= len(YPOS)
+            arrowIndex %= len(XPOS)*len(YPOS)
+
+        if k_en == 1:
+            if levelUnlock[arrowIndex] == True:
+                brouillage(console, 0.25, False)
+                return levelIndex[arrowIndex]
+
+        arrowSpriteX = XPOS[int(arrowIndex/len(YPOS))]
+        arrowSpriteY = YPOS[arrowIndex%len(YPOS)]
+
+        createimage(console, "img/arrow.legba", arrowSpriteY, arrowSpriteX-21)
+        console.refresh()
+
+
 def safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList):
     global dt
     while 1:
         ti = time.time()
         screenWallDistance = frame(console, levelMap, playerPosX, playerPosY, playerAngle)
         drawsprite(console, spriteList, playerPosX, playerPosY, playerAngle, screenWallDistance)
-        playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel = player(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel)
+        playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, touchElevator = player(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel)
         sprintbarupdate(console, maxSprintLevel, sprintLevel)
-        if k_en == 1:
-            return "map/map_map1.yaml"
+        if touchElevator == True:
+            return elevator(console)
         console.refresh()
         dt = time.time()-ti
         if limit_fps == True:
@@ -503,7 +591,7 @@ def safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, spri
                 time.sleep(0.033333-dt)
 
 
-def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, timerValue, keyNumber, keyPool, monsterActivate, monsterPosX, monsterPosY, monsterSpeed, pathMap):
+def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, timerValue, keyNumber, keyPool, monsterActivate, monsterPosX, monsterPosY, monsterSpeed, pathMap, levelId):
     global dt
     global arrive_play
     oldPlayerPosX = playerPosX
@@ -516,13 +604,23 @@ def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLe
         ti = time.time()
         screenWallDistance = frame(console, levelMap, playerPosX, playerPosY, playerAngle)
         drawsprite(console, spriteList, playerPosX, playerPosY, playerAngle, screenWallDistance)
-        playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel = player(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel)
-        if monsterActivate == True:
+        playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, touchElevator = player(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel)
+        if touchElevator == True and (keyNumber == 0):
+            if arrive_play.is_playing() == True:
+                arrive_play.stop()
+            brouillage(console, 0.25, False)
+            levelCompletion[levelId] = True
+            levelUnlock[levelId+1] = True
+            return "map/map_lobby.yaml"
+        if monsterActivate == True and levelId != 0:
             if arrive_play.is_playing() == False:
                 arrive_play = arrive.play()
             monsterPosX, monsterPosY, monsterIndex, chemin, oldPlayerPosX, oldPlayerPosY, animNum, endGame = \
             monster(console, monsterPosX, monsterPosY, playerPosX, playerPosY, monsterIndex, chemin, pathMap, oldPlayerPosX, oldPlayerPosY, monsterSpeed, animNum, spriteList)
             if endGame == True:
+                if arrive_play.is_playing() == True:
+                    arrive_play.stop()
+                brouillage(console, 2, True)
                 return "map/map_lobby.yaml"
         sprintbarupdate(console, maxSprintLevel, sprintLevel)
         keyNumber, timerValue, monsterSpeed = key(keyPool, spriteList, keyNumber, playerPosX, playerPosY, timerValue, monsterSpeed)
@@ -536,8 +634,6 @@ def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLe
                     timerValue = 0
         elif monsterActivate == False:
             monsterActivate = True
-        if k_en == 1:
-            return "map/map_map1.yaml"
         console.refresh()
         dt = time.time()-ti
         if limit_fps == True:
@@ -552,7 +648,7 @@ def level(console, levelFileName):
     keyList = []
     playerPosX = mapFile["player_spawn_point"]["pos_x"]
     playerPosY = mapFile["player_spawn_point"]["pos_y"]
-    playerAngle = 0
+    playerAngle = mapFile["player_spawn_point"]["angle"]
     sprintLevel = 100
     maxSprintLevel = 100
     keyNumber = -1
@@ -574,10 +670,37 @@ def level(console, levelFileName):
             keyList.append(key)
             spriteList.append([keys[key][0], keys[key][1], 0, 0, 0, 3])
 
+    for spr in mapFile["map_spr_list"]:
+        spriteList.append([spr["pos_x"], spr["pos_y"], 0, 0, 0, spr["spr"]])
+
     if mapFile["monstre_spawn_time"] >= 0:
-        return levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, timerValue, keyNumber, mapFile["key_pool"], monsterActivate, monsterPosX, monsterPosY, monsterSpeed, pathMap)
+        return levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, timerValue, keyNumber, mapFile["key_pool"], monsterActivate, monsterPosX, monsterPosY, monsterSpeed, pathMap, mapFile["level_id"])
     else:
         return safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList)
+
+
+def title(console):
+    musique = sa.WaveObject.from_wave_file("snd/helpeur.wav")
+    play = musique.play()
+    createimage(console, "img/title.legba", 0, 0)
+    createimage(console, "img/t0.legba", 9, 2)
+    console.refresh()
+    frameindex = 1
+    while 1:
+        if quality == 0:
+            createimage(console, f"img/t{frameindex}.legba", 9, 2)
+            console.refresh()
+            time.sleep(0.03333)
+            frameindex += 1
+            if frameindex == 5:
+                frameindex = 0
+        if play.is_playing() != True:
+            play = musique.play()
+        if k_en == 1:
+            play.stop()
+            console.clear()
+            break
+        console.addch(SY+1, SX+1, " ")
 
 
 def main(console):
@@ -600,7 +723,9 @@ def main(console):
     listener = keyboard.Listener(on_press=on_press, on_release=on_release)
     listener.start()
 
-    newLevel = "map/map_map1.yaml"
+    title(console)
+    brouillage(console, 0.25, False)
+    newLevel = "map/map_lobby.yaml"
     
     while 1:
         newLevel = level(console, newLevel)

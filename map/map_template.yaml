@@ -13,6 +13,7 @@ key_pool: [ # Liste des cl√©s avec leur position qui peuvent spawn. Une seul cl√
 player_spawn_point: # Position de spawn du joueur
   pos_x: 229
   pos_y: 229
+  angle: 0
 monstre_spawn_point: # Position de spawn du monstre
   pos_x: 229
   pos_y: 229

@@ -7,8 +7,10 @@ key_pool: [ # Liste des cl√©s avec leur position qui peuvent spawn. Une seul cl√
 player_spawn_point: # Position de spawn du joueur
   pos_x: 2.5
   pos_y: 4.5
+  angle: 0
 monstre_spawn_point: # Position de spawn du monstre
-  pos_x: 12.5
+  pos_x: 8.5
   pos_y: 14.5
 monstre_spawn_time: 240 # Temps avant que le monstre spawn (secondes)
-monster_speed_init: 14
+monster_speed_init: 16
+level_id: 2

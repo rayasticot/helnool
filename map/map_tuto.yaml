@@ -1,0 +1,24 @@
+map_data_file: "map/tuto.legba" # Fichier LEGBA contenant les données de la map
+map_spr_list:
+  - pos_x: 18.5 # Position X du sprite dans le monde
+    pos_y: 10.5 # Position Y du sprite dans le monde
+    spr: 6 # Image à utiliser (voir sprite_tex_index dans code python)
+  - pos_x: 9.5
+    pos_y: 14.5
+    spr: 7
+key_pool: [ # Liste des clés avec leur position qui peuvent spawn. Une seul clé va spawn par ligne.
+  [[7.5, 3.5],],
+  [[15.5, 3.5],],
+  [[18.5, 7.5],],
+  [[11.5, 14.5],],
+]
+player_spawn_point: # Position de spawn du joueur
+  pos_x: 1.5
+  pos_y: 3
+  angle: 0
+monstre_spawn_point: # Position de spawn du monstre
+  pos_x: 2
+  pos_y: 12
+monstre_spawn_time: 480 # Temps avant que le monstre spawn (secondes)
+monster_speed_init: 16
+level_id: 0

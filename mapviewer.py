@@ -5,7 +5,7 @@ import random
 import colordata
 import yaml
 
-MAP_FILE = "map/map_default.yaml"
+MAP_FILE = "map/map_lobby.yaml"
 
 SX = 230
 SY = 120
