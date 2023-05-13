@@ -14,20 +14,16 @@ SX = 230
 SY = 120
 FOV = 57.5
 HALF_FOV = 28.75
-LEVEL_LIST = ("map/map_default.yaml")
 
-dt = 0
 k_up, k_dw, k_rg, k_le, k_en, k_sf = 0, 0, 0, 0, 0, 0
-
-levelCompletion = [False, False, False, False, False ,False, False, False, False, False]
-levelUnlock = [True, True, True, False, False, False, False, False, False, False]
-levelIndex = ("map/map_tuto.yaml", "map/map_lobby.yaml", "map/map_map1.yaml")
-
-quality = 0
-limit_fps = True
 
 mouse = Controller()
 mouse.position = (800, 800)
+
+quality = 0
+limit_fps = True
+mouseMode = 0
+sensibility = 1.75
 
 
 def on_press(key):
@@ -51,6 +47,14 @@ def on_press(key):
             k_en = 1
         elif key == keyboard.Key.shift:
             k_sf = 1
+        elif key == keyboard.Key.up:
+            k_up = 1
+        elif key == keyboard.Key.down:
+            k_dw = 1
+        elif key == keyboard.Key.right:
+            k_rg = 1
+        elif key == keyboard.Key.left:
+            k_le = 1
 
  
 def on_release(key):
@@ -74,6 +78,14 @@ def on_release(key):
             k_en = 0
         elif key == keyboard.Key.shift:
             k_sf = 0
+        elif key == keyboard.Key.up:
+            k_up = 0
+        elif key == keyboard.Key.down:
+            k_dw = 0
+        elif key == keyboard.Key.right:
+            k_rg = 0
+        elif key == keyboard.Key.left:
+            k_le = 0
 
 
 def createimage(console, name, y, x):
@@ -221,45 +233,31 @@ def frame(console, map, posX, posY, angle):
                 break
         fixdist = dist*math.cos(math.radians(linang-angle))
         scr_dist.append(fixdist)
-        numrat = round(int(SY*1.5)/fixdist)
-        caca = round((SY-numrat)/2)
-        if caca == 0:
-            caca = 0
+        wallSize = round(int(SY*1.5)/fixdist)
+        wallStart = round((SY-wallSize)/2)
         for lin in range(SY):
             if side == 0:
                 color = map[int(pnty-dir[1])][int(pntx)]-1
             if side == 1:
                 color = map[int(pnty)][int(pntx-dir[0])]-1
-            if lin < caca:
+            if lin < wallStart:
                 console.addstr(lin, col, " ", curses.color_pair(238))
-                #screen[12].append([lin, col])
-            #elif lin == caca:
-            #    console.addstr(lin, col, " ", curses.color_pair(0))
-            elif lin > numrat+caca:
+            elif lin > wallSize+wallStart:
                 console.addstr(lin, col, " ", curses.color_pair(240))
-                #screen[8].append([lin, col])
-            #elif lin == numrat+caca:
-            #    console.addstr(lin, col, " ", curses.color_pair(0))
             else:
                 in_x = 0
                 in_y = 0
                 pixcolor = 0
-                if side == 0:
-                    if quality == 0:
+                if quality == 0:
+                    if side == 0:
                         in_x = round((pnty % 1)*63)
-                        in_y = round(((lin-caca)/numrat)*63)
-                        pixcolor = text_index[color][0][in_y][in_x]
-                    elif quality == 1:
-                        pixcolor = simp_index[color][0]
-                else:
-                    if quality == 0:
+                    else:
                         in_x = round((pntx % 1)*63)
-                        in_y = round(((lin-caca)/numrat)*63)
-                        pixcolor = text_index[color][1][in_y][in_x]
-                    elif quality == 1:
-                        pixcolor = simp_index[color][1]
+                    in_y = round(((lin-wallStart)/wallSize)*63)
+                    pixcolor = text_index[color][side][in_y][in_x]
+                elif quality == 1:
+                    pixcolor = simp_index[color][side]
                 console.addstr(lin, col, " ", curses.color_pair(pixcolor))
-                #screen[pixcolor].append([lin, col])
     return scr_dist
 
 
@@ -280,7 +278,7 @@ def drawsprite(console, sprite_list, posX, posY, angle, scr_dist):
         if difx < 0:
             spr_angle += 180
         
-        dif_angle = angle + 28.75 - spr_angle
+        dif_angle = angle + HALF_FOV - spr_angle
         if spr_angle > 270 and angle < 90:
             dif_angle += 360
         if angle > 270 and spr_angle < 90:
@@ -309,16 +307,7 @@ def drawsprite(console, sprite_list, posX, posY, angle, scr_dist):
                         console.addstr(lin+sprite[1], col+sprite[0], " ", curses.color_pair(pixcolor))
 
 
-def player(console, map, posx, posy, angle, sprintlevel, maxsprintlevel):
-    """
-    global monsteractivate
-    global monx
-    global mony
-    global spr_list
-    global ganiou_play
-    global ganiouproche_play
-    """
-
+def player(console, map, posx, posy, angle, sprintlevel, maxsprintlevel, dt):
     sprintcoef = 1
     touchElevator = False
     if k_sf == 1 and (k_up == 1 or k_dw == 1):
@@ -333,12 +322,18 @@ def player(console, map, posx, posy, angle, sprintlevel, maxsprintlevel):
         if sprintlevel < maxsprintlevel:
             sprintlevel += 0.25
 
-    mouseMoveX = mouse.position[0]-800
-    mouse.position = (800, 400)
-
     pdir = (math.cos(math.radians(angle)), math.sin(math.radians(angle)))
     rdir = (math.cos(math.radians(angle+90)), math.sin(math.radians(angle+90)))
-    angle -= mouseMoveX*0.05
+    
+    if mouseMode == 1:
+        mouseMoveX = mouse.position[0]-800
+        mouse.position = (800, 400)
+        angle -= mouseMoveX*0.025*sensibility
+    else:
+        if k_rg == 1:
+            angle -= 90*dt*sensibility
+        if k_le == 1:
+            angle += 90*dt*sensibility
 
     addX, addY = 0, 0
 
@@ -348,10 +343,10 @@ def player(console, map, posx, posy, angle, sprintlevel, maxsprintlevel):
     if k_up == 1:
         addX += pdir[0]
         addY += pdir[1]
-    if k_rg == 1:
+    if k_rg == 1 and mouseMode == 1:
         addX -= rdir[0]
         addY -= rdir[1]
-    if k_le == 1:
+    if k_le == 1 and mouseMode == 1:
         addX += rdir[0]
         addY += rdir[1]
 
@@ -369,30 +364,18 @@ def player(console, map, posx, posy, angle, sprintlevel, maxsprintlevel):
         posy -= addY
     
     angle = angle % 360
-    """
-    if int(posx) == 54 and int(posy) == 40 and spr_list[0][5] != 5:
-        monsteractivate = False
-        monx = 49.5
-        mony = 40.5
-        spr_list[0][0] = monx
-        spr_list[0][1] = mony
-        spr_list[0][5] = 2
-        if ganiou_play.is_playing() == True:
-            ganiou_play.stop()
-        if ganiouproche_play.is_playing() == True:
-            ganiouproche_play.stop()
-    """
+
     return posx, posy, angle, sprintlevel, maxsprintlevel, touchElevator
 
 
-def monster(console, monx, mony, posx, posy, mon_index, chemin, path, oldpx, oldpy, monsterspeed, anim_num, spr_list):
+def monster(console, monx, mony, posx, posy, mon_index, chemin, pathMap, oldpx, oldpy, monsterspeed, anim_num, spr_list):
     global ganiou_play
     global ganiouproche_play
 
     if int(oldpx) != int(posx) or int(oldpy) != int(posy):
         oldpx = posx
         oldpy = posy
-        grid = Grid(matrix=path)
+        grid = Grid(matrix=pathMap)
         start = grid.node(int(monx), int(mony))
         end = grid.node(int(posx), int(posy))
 
@@ -494,7 +477,7 @@ def secondsToMinute(timeSeconds):
 def createDigitSprite(console, minutes, seconds):
     DIGIT_SIZE = 8
     FIRST_DIGIT_POS = 206
-    DIGIT_POSY = 108
+    DIGIT_POSY = 107
     WHITE = 231
     BLACK = 232
     YELLOW = 226
@@ -524,9 +507,37 @@ def createDigitSprite(console, minutes, seconds):
     console.addch(DIGIT_POSY+9, FIRST_DIGIT_POS+8, " ", curses.color_pair(BLACK))
 
 
-def timerUpdate(console, timerValue):
+def createKeyNumbers(console, keyNumber, totalKeys):
+    DIGIT_SIZE = 8
+    FIRST_DIGIT_POS = 206
+    DIGIT_POSY = -2
+
+    chiffreTexture = loadtexture("img/chiffre.legba")
+    slashTexture = loadtexture("img/slash.legba")
+
+    for i in range(3):
+        if i == 0:
+            digit = totalKeys-keyNumber
+        elif i == 2:
+            digit = totalKeys
+        if i != 1:
+            for col in range(12):
+                for lin in range(8):
+                    if chiffreTexture[col][lin+(digit*DIGIT_SIZE)] == 201:
+                        continue
+                    console.addch(col+DIGIT_POSY, lin+FIRST_DIGIT_POS+(8*i), " ", curses.color_pair(231))
+        else:
+            for col in range(13):
+                for lin in range(8):
+                    if slashTexture[col][lin] == 201:
+                        continue
+                    console.addch(col+DIGIT_POSY+1, lin+FIRST_DIGIT_POS+(8*i), " ", curses.color_pair(231))
+
+
+def uiUpdate(console, timerValue, keyNumber, totalKeys):
     minutes, seconds = secondsToMinute(timerValue)
     createDigitSprite(console, minutes, seconds)
+    createKeyNumbers(console, keyNumber, totalKeys)
 
 
 def brouillage(console, seconds, helnool):
@@ -545,18 +556,18 @@ def brouillage(console, seconds, helnool):
         play.stop()
 
 
-def createCheckElevator(console):
+def createCheckElevator(console, levels):
     XPOS = (26, 136)
     YPOS = (80, 63, 46, 29, 12)
 
-    for i in range(len(levelCompletion)):
-        if levelCompletion[i] == True:
+    for i in range(len(levels)):
+        if levels[i][1] == True:
             createimage(console, "img/check.legba", YPOS[i%len(YPOS)], XPOS[int(i/len(YPOS))]+73)
-        if levelUnlock[i] == False:
+        if levels[i][2] == False:
             createimage(console, "img/warning.legba", YPOS[i%len(YPOS)], XPOS[int(i/len(YPOS))])
 
 
-def elevator(console):
+def elevator(console, levels):
     global k_up
     global k_dw
     global k_rg
@@ -569,7 +580,7 @@ def elevator(console):
     brouillage(console, 0.25, False)
     while 1:
         createimage(console, "img/elevatorbg.legba", 0, 0)
-        createCheckElevator(console)
+        createCheckElevator(console, levels)
 
         if k_up == 1:
             k_up = 0
@@ -592,9 +603,9 @@ def elevator(console):
             arrowIndex %= len(XPOS)*len(YPOS)
 
         if k_en == 1:
-            if levelUnlock[arrowIndex] == True:
+            if levels[arrowIndex][2] == True:
                 brouillage(console, 0.25, False)
-                return levelIndex[arrowIndex]
+                return levels[arrowIndex][0], levels
 
         arrowSpriteX = XPOS[int(arrowIndex/len(YPOS))]
         arrowSpriteY = YPOS[arrowIndex%len(YPOS)]
@@ -603,16 +614,16 @@ def elevator(console):
         console.refresh()
 
 
-def safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList):
-    global dt
+def safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, levels):
+    dt = 0
     while 1:
         ti = time.time()
         screenWallDistance = frame(console, levelMap, playerPosX, playerPosY, playerAngle)
         drawsprite(console, spriteList, playerPosX, playerPosY, playerAngle, screenWallDistance)
-        playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, touchElevator = player(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel)
+        playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, touchElevator = player(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, dt)
         sprintbarupdate(console, maxSprintLevel, sprintLevel)
         if touchElevator == True:
-            return elevator(console)
+            return elevator(console, levels)
         console.refresh()
         dt = time.time()-ti
         if limit_fps == True:
@@ -620,27 +631,32 @@ def safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, spri
                 time.sleep(0.033333-dt)
 
 
-def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, timerValue, keyNumber, keyPool, monsterActivate, monsterPosX, monsterPosY, monsterSpeed, pathMap, levelId):
-    global dt
+def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, timerValue, keyNumber, keyPool, monsterActivate, monsterPosX, monsterPosY, monsterSpeed, pathMap, levelId, levels):
     global arrive_play
     oldPlayerPosX = playerPosX
     oldPlayerPosY = playerPosY
     monsterIndex = 0
     chemin = []
     animNum = 0
+    dt = 0
     
     while 1:
         ti = time.time()
         screenWallDistance = frame(console, levelMap, playerPosX, playerPosY, playerAngle)
         drawsprite(console, spriteList, playerPosX, playerPosY, playerAngle, screenWallDistance)
-        playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, touchElevator = player(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel)
+        playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, touchElevator = player(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, dt)
         if touchElevator == True and (keyNumber == 0):
             if arrive_play.is_playing() == True:
                 arrive_play.stop()
             brouillage(console, 0.25, False)
-            levelCompletion[levelId] = True
-            levelUnlock[levelId+1] = True
-            return "map/map_lobby.yaml"
+            newLevels = list(levels)
+            newLevels[levelId] = list(newLevels[levelId])
+            newLevels[levelId][1] = True
+            newLevels[levelId] = tuple(newLevels[levelId])
+            newLevels[levelId+1] = list(newLevels[levelId+1])
+            newLevels[levelId+1][2] = True
+            newLevels[levelId+1] = tuple(newLevels[levelId+1])
+            return "map/map_lobby.yaml", tuple(newLevels)
         if monsterActivate == True and levelId != 0:
             if arrive_play.is_playing() == False:
                 arrive_play = arrive.play()
@@ -650,10 +666,10 @@ def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLe
                 if arrive_play.is_playing() == True:
                     arrive_play.stop()
                 brouillage(console, 2, True)
-                return "map/map_lobby.yaml"
+                return "map/map_lobby.yaml", levels
         sprintbarupdate(console, maxSprintLevel, sprintLevel)
         keyNumber, timerValue, monsterSpeed = key(keyPool, spriteList, keyNumber, playerPosX, playerPosY, timerValue, monsterSpeed)
-        timerUpdate(console, timerValue)
+        uiUpdate(console, timerValue, keyNumber, len(keyPool))
         if timerValue > 0:
             if oldPlayerPosX == playerPosX and oldPlayerPosY == playerPosY:
                 pass
@@ -670,7 +686,7 @@ def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLe
                 time.sleep(0.033333-dt)
 
 
-def level(console, levelFileName):
+def level(console, levelFileName, levels):
     global dt
     mapFile = loadmap(levelFileName)
     spriteList = []
@@ -703,9 +719,9 @@ def level(console, levelFileName):
         spriteList.append([spr["pos_x"], spr["pos_y"], 0, 0, 0, spr["spr"]])
 
     if mapFile["monstre_spawn_time"] >= 0:
-        return levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, timerValue, keyNumber, mapFile["key_pool"], monsterActivate, monsterPosX, monsterPosY, monsterSpeed, pathMap, mapFile["level_id"])
+        return levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, timerValue, keyNumber, mapFile["key_pool"], monsterActivate, monsterPosX, monsterPosY, monsterSpeed, pathMap, mapFile["level_id"], levels)
     else:
-        return safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList)
+        return safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, levels)
 
 
 def title(console):
@@ -754,10 +770,24 @@ def main(console):
 
     title(console)
     brouillage(console, 0.25, False)
+
+    levels = (
+        ("map/map_tuto.yaml", False, True),
+        ("map/map_lobby.yaml", False, True),
+        ("map/map_map1.yaml", False, True),
+        ("map/INSERTMAP1", False, False),
+        ("map/INSERTMAP2", False, False),
+        ("map/INSERTMAP3", False, False),
+        ("map/INSERTMAP4", False, False),
+        ("map/INSERTMAP5", False, False),
+        ("map/INSERTMAP6", False, False),
+        ("map/INSERTMAP7", False, False)
+    )
+
     newLevel = "map/map_lobby.yaml"
     
     while 1:
-        newLevel = level(console, newLevel)
+        newLevel, levels = level(console, newLevel, levels)
 
 
 curses.wrapper(main)
