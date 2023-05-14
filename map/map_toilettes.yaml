@@ -1,0 +1,81 @@
+map_data_file: "map/toilettes.legba" # Fichier LEGBA contenant les données de la map
+map_spr_list:
+  - pos_x: 4.5
+    pos_y: 9.5
+    spr: 9
+  - pos_x: 4.5
+    pos_y: 12.5
+    spr: 9
+  - pos_x: 4.5
+    pos_y: 15.5
+    spr: 9
+  - pos_x: 11.5
+    pos_y: 9.5
+    spr: 9
+  - pos_x: 11.5
+    pos_y: 12.5
+    spr: 9
+  - pos_x: 11.5
+    pos_y: 15.5
+    spr: 9
+  - pos_x: 4.5
+    pos_y: 21.5
+    spr: 9
+  - pos_x: 4.5
+    pos_y: 27.5
+    spr: 9
+  - pos_x: 11.5
+    pos_y: 21.5
+    spr: 9
+  - pos_x: 11.5
+    pos_y: 27.5
+    spr: 9
+  - pos_x: 8.5
+    pos_y: 27.5
+    spr: 9
+
+  - pos_x: 17.5
+    pos_y: 9.5
+    spr: 9
+  - pos_x: 17.5
+    pos_y: 12.5
+    spr: 9
+  - pos_x: 17.5
+    pos_y: 15.5
+    spr: 9
+  - pos_x: 23.5
+    pos_y: 9.5
+    spr: 9
+  - pos_x: 23.5
+    pos_y: 12.5
+    spr: 9
+  - pos_x: 23.5
+    pos_y: 15.5
+    spr: 9
+  - pos_x: 17.5
+    pos_y: 27.5
+    spr: 9
+  - pos_x: 23.5
+    pos_y: 21.5
+    spr: 9
+  - pos_x: 20.5
+    pos_y: 27.5
+    spr: 9
+  - pos_x: 23.5
+    pos_y: 27.5
+    spr: 9
+key_pool: [ # Liste des clés avec leur position qui peuvent spawn. Une seul clé va spawn par ligne.
+  [[11.5, 12.5], [5.5, 21.5], [17.5, 21.5], [20.5, 9.5]],
+  [[14.5, 3.5],],
+  [[32.5, 16],],
+]
+player_spawn_point: # Position de spawn du joueur
+  pos_x: 9.6
+  pos_y: 4.5
+  angle: 90
+monstre_spawn_point: # Position de spawn du monstre
+  pos_x: 19.5
+  pos_y: 5.5
+monstre_spawn_time: 60 # Temps avant que le monstre spawn (secondes)
+monster_speed_init: 14
+level_id: 4

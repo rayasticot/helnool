@@ -21,8 +21,8 @@ mouse = Controller()
 mouse.position = (800, 800)
 
 quality = 0
-limit_fps = True
-mouseMode = 0
+limit_fps = False
+mouseMode = 1
 sensibility = 1.75
 
 
@@ -138,6 +138,14 @@ def loadmap(mapfile):
     return mapfiledata
 
 
+def saveGame(saveFile, levelId, value):
+    with open(saveFile, "r") as f:
+        saveData = yaml.safe_load(f)
+    saveData[levelId][value] = True
+    with open(saveFile, "w") as f:
+        yaml.dump(saveData, f)
+
+
 brique = loadtexture("img/brak.legba")
 brique_d = loadtexture("img/brakd.legba")
 toile = loadtexture("img/toile.legba")
@@ -157,6 +165,20 @@ concrete_d = loadtexture("img/concrete_d.legba")
 box = loadtexture("img/box.legba")
 box_d = loadtexture("img/box_d.legba")
 door = loadtexture("img/door.legba")
+induwall = loadtexture("img/induwall.legba")
+induwall_d = loadtexture("img/induwall_d.legba")
+bloodwall = loadtexture("img/bloodwall.legba")
+bloodwall_d = loadtexture("img/bloodwall_d.legba")
+colorwall = loadtexture("img/colorwall.legba")
+colorwall_d = loadtexture("img/colorwall_d.legba")
+chickenwall = loadtexture("img/wallchicken.legba")
+chickenwall_d = loadtexture("img/wallchicken_d.legba")
+chickenpanneau = loadtexture("img/chickenpanneau.legba")
+chickenpanneau_d = loadtexture("img/chickenpanneau_d.legba")
+caisse = loadtexture("img/caisse.legba")
+caisse_d = loadtexture("img/caisse_d.legba")
+icewall = loadtexture("img/icewall.legba")
+icewall_d = loadtexture("img/icewall_d.legba")
 peur1 = loadtexture("img/mons1.legba")
 peur2 = loadtexture("img/mons2.legba")
 peur3 = loadtexture("img/mons3.legba")
@@ -165,16 +187,20 @@ cle = loadtexture("img/cle.legba")
 gun = loadtexture("img/gun.legba")
 courir = loadtexture("img/courir.legba")
 retour = loadtexture("img/retour.legba")
-text_index = ((brique, brique_d), (toile, toile_d), (herb, herb_d), (filet, filet), (eye, eye_d), (labo, labo_d), (concrete, concrete_d), (box, box_d), (samsung, samsung_d), (keyhole, keyhole), (door, door))
+bureautest = loadtexture("img/bureautest.legba")
+toilette = loadtexture("img/toilette.legba")
+chickentable = loadtexture("img/chickentable.legba")
+pouletpend = loadtexture("img/pouletpend.legba")
+text_index = ((brique, brique_d), (toile, toile_d), (herb, herb_d), (filet, filet), (eye, eye_d), (labo, labo_d), (concrete, concrete_d), (box, box_d), (samsung, samsung_d), (keyhole, keyhole), (door, door), (induwall, induwall_d), (bloodwall, bloodwall_d), (colorwall, colorwall_d), (chickenwall, chickenwall_d), (chickenpanneau, chickenpanneau), (caisse, caisse_d), (icewall, icewall_d))
 simp_index = ((160, 124), (223, 180), (238, 237), (249, 239), (70, 71), (160, 124), (223, 180), (238, 237), (249, 239), (70, 71))
-sprite_tex_index = (peur1, peur2, peur3, cle, gun, peur4, courir, retour)
+sprite_tex_index = (peur1, peur2, peur3, cle, gun, peur4, courir, retour, bureautest, toilette, chickentable, pouletpend)
 
+"""
 ganiouproche = sa.WaveObject.from_wave_file("snd/ganiou_proche.wav")
 ganiou = sa.WaveObject.from_wave_file("snd/ganiou.wav")
 ganiouend = sa.WaveObject.from_wave_file("snd/ganiou_end.wav")
 cle = sa.WaveObject.from_wave_file("snd/cle.wav")
 shot = sa.WaveObject.from_wave_file("snd/shot.wav")
-arrive = sa.WaveObject.from_wave_file("snd/helnoolarrive.wav")
 ganiouproche_play = ganiouproche.play()
 ganiouproche_play.stop()
 ganiou_play = ganiou.play()
@@ -183,8 +209,7 @@ ganiouend_play = ganiouend.play()
 ganiouend_play.stop()
 shot_play = shot.play()
 shot_play.stop()
-arrive_play = arrive.play()
-arrive_play.stop()
+"""
 
 
 def normalize(vector):
@@ -313,14 +338,14 @@ def player(console, map, posx, posy, angle, sprintlevel, maxsprintlevel, dt):
     if k_sf == 1 and (k_up == 1 or k_dw == 1):
         sprintcoef = 2
         if sprintlevel > 0:
-            sprintlevel -= 1
+            sprintlevel -= 1*dt*30
         elif maxsprintlevel > 0:
-            maxsprintlevel -= 2
+            maxsprintlevel -= 2*dt*30
         else:
             sprintcoef = 1
     else:
         if sprintlevel < maxsprintlevel:
-            sprintlevel += 0.25
+            sprintlevel += 0.25*dt*30
 
     pdir = (math.cos(math.radians(angle)), math.sin(math.radians(angle)))
     rdir = (math.cos(math.radians(angle+90)), math.sin(math.radians(angle+90)))
@@ -351,8 +376,8 @@ def player(console, map, posx, posy, angle, sprintlevel, maxsprintlevel, dt):
         addY += rdir[1]
 
     addX, addY = normalize((addX, addY))
-    addX *= 3*dt*sprintcoef
-    addY *= 3*dt*sprintcoef
+    addX *= 2.6*dt*sprintcoef
+    addY *= 2.6*dt*sprintcoef
 
     posx += addX
     posy += addY
@@ -368,47 +393,42 @@ def player(console, map, posx, posy, angle, sprintlevel, maxsprintlevel, dt):
     return posx, posy, angle, sprintlevel, maxsprintlevel, touchElevator
 
 
-def monster(console, monx, mony, posx, posy, mon_index, chemin, pathMap, oldpx, oldpy, monsterspeed, anim_num, spr_list):
-    global ganiou_play
-    global ganiouproche_play
-
-    if int(oldpx) != int(posx) or int(oldpy) != int(posy):
-        oldpx = posx
-        oldpy = posy
-        grid = Grid(matrix=pathMap)
-        start = grid.node(int(monx), int(mony))
-        end = grid.node(int(posx), int(posy))
-
-        finder = AStarFinder(diagonal_movement=DiagonalMovement.always)
-        paths, runs = finder.find_path(start, end, grid)
-        chemin = paths
-        mon_index = 1
-    
-    """
-    if spr_list[0][3] < 8:
-        if ganiou_play.is_playing() == True:
-            ganiou_play.stop()
-        if ganiouproche_play.is_playing() != True:
-            ganiouproche_play = ganiouproche.play()
-    elif spr_list[0][3] < 16 and spr_list[0][3] >= 8:
-        if ganiouproche_play.is_playing() == True:
-            ganiouproche_play.stop()
-        if ganiou_play.is_playing() != True:
-            ganiou_play = ganiou.play()
+def followPath(console, path, x, y, distance):
+    deltaX = path[1][0]-x
+    deltaY = path[1][1]-y
+    distanceToFirst = math.sqrt(deltaX**2 + deltaY**2)
+    if distanceToFirst >= distance:
+        dirVectorX, dirVectorY = normalize((deltaX, deltaY))
+        dirVectorX *= distance
+        dirVectorY *= distance
+        return x+dirVectorX, y+dirVectorY, False
     else:
-        if ganiou_play.is_playing() == True:
-            ganiou_play.stop()
-        if ganiouproche_play.is_playing() == True:
-            ganiouproche_play.stop()
-    """
+        distance -= distanceToFirst
+        try:
+            deltaX = path[2][0]-path[1][0]
+            deltaY = path[2][1]-path[1][1]
+
+            dirVectorX, dirVectorY = normalize((deltaX, deltaY))
+            dirVectorX *= distance
+            dirVectorY *= distance
+            return path[1][0]+dirVectorX, path[1][1]+dirVectorY, False
+        except IndexError:
+            return x, y, True
+
+
+def monster(console, monx, mony, posx, posy, pathMap, monsterspeed, anim_num, spr_list, dt):
+    endGame = False
+    grid = Grid(matrix=pathMap)
+    start = grid.node(int(monx), int(mony))
+    end = grid.node(int(posx), int(posy))
+
+    finder = AStarFinder()
+    paths, runs = finder.find_path(start, end, grid)
     
-    mondir = ((chemin[int(mon_index/monsterspeed)][0]+0.5)-monx, (chemin[int(mon_index/monsterspeed)][1]+0.5)-mony)
-    monx += mondir[0]/monsterspeed
-    mony += mondir[1]/monsterspeed
+    monx, mony, endGame = followPath(console, paths, monx, mony, (1/monsterspeed)*26*dt)
     
-    spr_list[0][0] = monx
-    spr_list[0][1] = mony
-    mon_index += 1
+    spr_list[0][0] = monx+0.5
+    spr_list[0][1] = mony+0.5
     anim_num += 1
     anim_num = anim_num % 16
     if anim_num > 11:
@@ -420,12 +440,13 @@ def monster(console, monx, mony, posx, posy, mon_index, chemin, pathMap, oldpx, 
     else:
         spr_list[0][5] = 2
 
-    endGame = False
+    
     if posx > monx-1 and posx < monx+1:
         if posy > mony-1 and posy < mony+1:
             endGame = True
     
-    return monx, mony, mon_index, chemin, oldpx, oldpy, anim_num, endGame
+    
+    return monx, mony, anim_num, endGame
 
 
 def sprintbarupdate(console, maxsprintlevel, sprintlevel):
@@ -439,12 +460,7 @@ def sprintbarupdate(console, maxsprintlevel, sprintlevel):
 
 
 def key(key_pool, spr_list, key_number, posx, posy, timerValue, monsterspeed):
-    """
-    global monsteractivate
-    global monsterspeed
-    global monx
-    global mony
-    """
+    cle = sa.WaveObject.from_wave_file("snd/cle.wav")
     for i in range(len(key_pool)):
         if spr_list[i+1][5] == -1:
             continue
@@ -458,13 +474,6 @@ def key(key_pool, spr_list, key_number, posx, posy, timerValue, monsterspeed):
                 else:
                     timerValue = timerValue/2
                 monsterspeed -= 1
-                """
-                if monsteractivate == False:
-                    monx = monstre_spawn[i][cleliste[i]][0]
-                    mony = monstre_spawn[i][cleliste[i]][1]
-                    monsteractivate = True
-                
-                """
     return key_number, timerValue, monsterspeed
 
 
@@ -534,10 +543,20 @@ def createKeyNumbers(console, keyNumber, totalKeys):
                     console.addch(col+DIGIT_POSY+1, lin+FIRST_DIGIT_POS+(8*i), " ", curses.color_pair(231))
 
 
-def uiUpdate(console, timerValue, keyNumber, totalKeys):
+def createHand(console, monsterDistance):
+    if monsterDistance > 16:
+        createimage(console, "img/handgood.legba", 0, 0)
+    elif monsterDistance > 8:
+        createimage(console, "img/handmid.legba", 0, 0)
+    else:
+        createimage(console, "img/handbad.legba", 0, 0)
+
+
+def uiUpdate(console, timerValue, keyNumber, totalKeys, monsterDistance):
     minutes, seconds = secondsToMinute(timerValue)
     createDigitSprite(console, minutes, seconds)
     createKeyNumbers(console, keyNumber, totalKeys)
+    createHand(console, monsterDistance)
 
 
 def brouillage(console, seconds, helnool):
@@ -561,13 +580,13 @@ def createCheckElevator(console, levels):
     YPOS = (80, 63, 46, 29, 12)
 
     for i in range(len(levels)):
-        if levels[i][1] == True:
+        if levels[i]["completed"] == True:
             createimage(console, "img/check.legba", YPOS[i%len(YPOS)], XPOS[int(i/len(YPOS))]+73)
-        if levels[i][2] == False:
+        if levels[i]["unlocked"] == False:
             createimage(console, "img/warning.legba", YPOS[i%len(YPOS)], XPOS[int(i/len(YPOS))])
 
 
-def elevator(console, levels):
+def elevator(console):
     global k_up
     global k_dw
     global k_rg
@@ -578,6 +597,10 @@ def elevator(console, levels):
     arrowSpriteX = XPOS[0]-20
     arrowSpriteY = YPOS[1]
     brouillage(console, 0.25, False)
+
+    with open("save.yaml", "r") as f:
+        levels = yaml.safe_load(f)
+
     while 1:
         createimage(console, "img/elevatorbg.legba", 0, 0)
         createCheckElevator(console, levels)
@@ -603,9 +626,9 @@ def elevator(console, levels):
             arrowIndex %= len(XPOS)*len(YPOS)
 
         if k_en == 1:
-            if levels[arrowIndex][2] == True:
+            if levels[arrowIndex]["unlocked"] == True:
                 brouillage(console, 0.25, False)
-                return levels[arrowIndex][0], levels
+                return levels[arrowIndex]["a_name"]
 
         arrowSpriteX = XPOS[int(arrowIndex/len(YPOS))]
         arrowSpriteY = YPOS[arrowIndex%len(YPOS)]
@@ -614,7 +637,7 @@ def elevator(console, levels):
         console.refresh()
 
 
-def safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, levels):
+def safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList):
     dt = 0
     while 1:
         ti = time.time()
@@ -623,7 +646,7 @@ def safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, spri
         playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, touchElevator = player(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, dt)
         sprintbarupdate(console, maxSprintLevel, sprintLevel)
         if touchElevator == True:
-            return elevator(console, levels)
+            return elevator(console)
         console.refresh()
         dt = time.time()-ti
         if limit_fps == True:
@@ -631,13 +654,15 @@ def safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, spri
                 time.sleep(0.033333-dt)
 
 
-def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, timerValue, keyNumber, keyPool, monsterActivate, monsterPosX, monsterPosY, monsterSpeed, pathMap, levelId, levels):
-    global arrive_play
+def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, timerValue, keyNumber, keyPool, monsterActivate, monsterPosX, monsterPosY, monsterSpeed, pathMap, levelId):
+    arrive = sa.WaveObject.from_wave_file("snd/helnoolarrive.wav")
+    arrive_play = arrive.play()
+    arrive_play.stop()
+    animNum = 0
+
     oldPlayerPosX = playerPosX
     oldPlayerPosY = playerPosY
-    monsterIndex = 0
-    chemin = []
-    animNum = 0
+
     dt = 0
     
     while 1:
@@ -649,27 +674,21 @@ def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLe
             if arrive_play.is_playing() == True:
                 arrive_play.stop()
             brouillage(console, 0.25, False)
-            newLevels = list(levels)
-            newLevels[levelId] = list(newLevels[levelId])
-            newLevels[levelId][1] = True
-            newLevels[levelId] = tuple(newLevels[levelId])
-            newLevels[levelId+1] = list(newLevels[levelId+1])
-            newLevels[levelId+1][2] = True
-            newLevels[levelId+1] = tuple(newLevels[levelId+1])
-            return "map/map_lobby.yaml", tuple(newLevels)
+            saveGame("save.yaml", levelId, "completed")
+            saveGame("save.yaml", levelId+1, "unlocked")
+            return "map/map_lobby.yaml"
         if monsterActivate == True and levelId != 0:
             if arrive_play.is_playing() == False:
                 arrive_play = arrive.play()
-            monsterPosX, monsterPosY, monsterIndex, chemin, oldPlayerPosX, oldPlayerPosY, animNum, endGame = \
-            monster(console, monsterPosX, monsterPosY, playerPosX, playerPosY, monsterIndex, chemin, pathMap, oldPlayerPosX, oldPlayerPosY, monsterSpeed, animNum, spriteList)
+            monsterPosX, monsterPosY, animNum, endGame = monster(console, monsterPosX, monsterPosY, playerPosX, playerPosY, pathMap, monsterSpeed, animNum, spriteList, dt)
             if endGame == True:
                 if arrive_play.is_playing() == True:
                     arrive_play.stop()
                 brouillage(console, 2, True)
-                return "map/map_lobby.yaml", levels
+                return "map/map_lobby.yaml"
         sprintbarupdate(console, maxSprintLevel, sprintLevel)
         keyNumber, timerValue, monsterSpeed = key(keyPool, spriteList, keyNumber, playerPosX, playerPosY, timerValue, monsterSpeed)
-        uiUpdate(console, timerValue, keyNumber, len(keyPool))
+        uiUpdate(console, timerValue, keyNumber, len(keyPool), spriteList[0][3])
         if timerValue > 0:
             if oldPlayerPosX == playerPosX and oldPlayerPosY == playerPosY:
                 pass
@@ -680,13 +699,14 @@ def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLe
         elif monsterActivate == False:
             monsterActivate = True
         console.refresh()
-        dt = time.time()-ti
+        pre_dt = time.time()-ti
         if limit_fps == True:
-            if(dt < 0.033333):
-                time.sleep(0.033333-dt)
+            if(pre_dt < 0.033333):
+                time.sleep(0.033333-pre_dt)
+        dt = time.time()-ti
 
 
-def level(console, levelFileName, levels):
+def level(console, levelFileName):
     global dt
     mapFile = loadmap(levelFileName)
     spriteList = []
@@ -694,8 +714,8 @@ def level(console, levelFileName, levels):
     playerPosX = mapFile["player_spawn_point"]["pos_x"]
     playerPosY = mapFile["player_spawn_point"]["pos_y"]
     playerAngle = mapFile["player_spawn_point"]["angle"]
-    sprintLevel = 100
-    maxSprintLevel = 100
+    sprintLevel = 100.0
+    maxSprintLevel = 100.0
     keyNumber = -1
     monsterActivate = False
     monsterSpeed = 0
@@ -719,9 +739,9 @@ def level(console, levelFileName, levels):
         spriteList.append([spr["pos_x"], spr["pos_y"], 0, 0, 0, spr["spr"]])
 
     if mapFile["monstre_spawn_time"] >= 0:
-        return levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, timerValue, keyNumber, mapFile["key_pool"], monsterActivate, monsterPosX, monsterPosY, monsterSpeed, pathMap, mapFile["level_id"], levels)
+        return levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, timerValue, keyNumber, mapFile["key_pool"], monsterActivate, monsterPosX, monsterPosY, monsterSpeed, pathMap, mapFile["level_id"])
     else:
-        return safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, levels)
+        return safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList)
 
 
 def title(console):
@@ -771,23 +791,11 @@ def main(console):
     title(console)
     brouillage(console, 0.25, False)
 
-    levels = (
-        ("map/map_tuto.yaml", False, True),
-        ("map/map_lobby.yaml", False, True),
-        ("map/map_map1.yaml", False, True),
-        ("map/INSERTMAP1", False, False),
-        ("map/INSERTMAP2", False, False),
-        ("map/INSERTMAP3", False, False),
-        ("map/INSERTMAP4", False, False),
-        ("map/INSERTMAP5", False, False),
-        ("map/INSERTMAP6", False, False),
-        ("map/INSERTMAP7", False, False)
-    )
-
     newLevel = "map/map_lobby.yaml"
     
     while 1:
-        newLevel, levels = level(console, newLevel, levels)
+        newLevel = level(console, newLevel)
 
 
-curses.wrapper(main)
+if __name__ == "__main__":
+    curses.wrapper(main)
