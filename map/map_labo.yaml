@@ -1,0 +1,18 @@
+map_data_file: "map/labo.legba" # Fichier LEGBA contenant les données de la map
+map_spr_list:
+  - pos_x: 229
+    pos_y: 229
+    spr: 10
+key_pool: [ # Liste des clés avec leur position qui peuvent spawn. Une seul clé va spawn par ligne.
+  [[13.5, 1.5],],
+]
+player_spawn_point: # Position de spawn du joueur
+  pos_x: 11.5
+  pos_y: 1.6
+  angle: 0
+monstre_spawn_point: # Position de spawn du monstre
+  pos_x: 18.5
+  pos_y: 1
+monstre_spawn_time: 599 # Temps avant que le monstre spawn (secondes)
+monster_speed_init: 10
+level_id: 9

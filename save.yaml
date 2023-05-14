@@ -22,9 +22,9 @@
 - a_name: map/INSERTMAP.yaml
   completed: false
   unlocked: false
-- a_name: map/INSERTMAP.yaml
+- a_name: map/map_backroom.yaml
+  completed: true
+  unlocked: true
+- a_name: map/map_labo.yaml
   completed: false
-  unlocked: false
-- a_name: map/INSERTMAP.yaml
-  completed: false
-  unlocked: false
+  unlocked: true
