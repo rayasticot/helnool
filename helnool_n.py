@@ -2,7 +2,6 @@ import curses
 import math
 import time
 import random
-from pathfinding.core.diagonal_movement import DiagonalMovement
 from pathfinding.core.grid import Grid
 from pathfinding.finder.a_star import AStarFinder
 from pynput import keyboard
@@ -193,9 +192,10 @@ bureautest = loadtexture("img/bureautest.legba")
 toilette = loadtexture("img/toilette.legba")
 chickentable = loadtexture("img/chickentable.legba")
 pouletpend = loadtexture("img/pouletpend.legba")
+toyota = loadtexture("img/toyota.legba")
 text_index = ((brique, brique_d), (toile, toile_d), (herb, herb_d), (filet, filet), (eye, eye_d), (labo, labo_d), (concrete, concrete_d), (box, box_d), (samsung, samsung_d), (keyhole, keyhole), (door, door), (induwall, induwall_d), (bloodwall, bloodwall_d), (colorwall, colorwall_d), (chickenwall, chickenwall_d), (chickenpanneau, chickenpanneau), (caisse, caisse_d), (icewall, icewall_d), (window, window), (backwall, backwall_d))
 simp_index = ((160, 124), (223, 180), (238, 237), (249, 239), (70, 71), (160, 124), (223, 180), (238, 237), (249, 239), (70, 71))
-sprite_tex_index = (peur1, peur2, peur3, cle, gun, peur4, courir, retour, bureautest, toilette, chickentable, pouletpend)
+sprite_tex_index = (peur1, peur2, peur3, cle, gun, peur4, courir, retour, bureautest, toilette, chickentable, pouletpend, toyota)
 
 """
 ganiouproche = sa.WaveObject.from_wave_file("snd/ganiou_proche.wav")
@@ -661,6 +661,41 @@ def brouillage(console, seconds, helnool):
         play.stop()
 
 
+def gunCheckCollision(gunx, guny, posx, posy):
+    deltaX = gunx-posx
+    deltaY = guny-posy
+    if math.sqrt(deltaX**2 + deltaY**2) <= 1:
+        return True
+    else:
+        return False
+
+
+def shootBullet(levelMap, posx, posy, angle, monx, mony):
+    dir = (math.cos(math.radians(angle))*0.25, math.sin(math.radians(angle))*0.25)
+    pntx = posx
+    pnty = posy
+    while 1:
+        pntx += dir[0]
+        pnty += dir[1]
+        if levelMap[int(pnty)][int(pntx)] != 0:
+            return 0
+        deltaX = pntx-monx-0.5
+        deltaY = pnty-mony-0.5
+        if math.sqrt(deltaX**2 + deltaY**2) <= 1:
+            return 1
+
+
+def gun(console, levelMap, spr_list, posx, posy, angle, monx, mony, gunsoundplay, gunsound):
+    global k_en
+    createimage(console, "img/aim.legba", 60, 75)
+    if k_en == 1 and gunsoundplay.is_playing() == False:
+        k_en = 0
+        gunsoundplay = gunsound.play()
+    
+        return shootBullet(levelMap, posx, posy, angle, monx, mony), gunsoundplay
+    return 0, gunsoundplay
+
+
 def createCheckElevator(console, levels):
     XPOS = (26, 136)
     YPOS = (80, 63, 46, 29, 12)
@@ -798,8 +833,19 @@ def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLe
         dt = time.time()-ti
 
 
-def outsideLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList):
+def outsideLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, monsterPosX, monsterPosY, monsterSpeed, pathMap, levelId):
     dt = 0
+    monsterActivate = False
+    monsterLife = 1
+    animNum = 0
+
+    shot = sa.WaveObject.from_wave_file("snd/shot.wav")
+    shot_play = shot.play()
+    shot_play.stop()
+    music = sa.WaveObject.from_wave_file("snd/mince.wav")
+    music_play = music.play()
+    music_play.stop()
+
     heightMap = loadtexture("map/height.legba")
     while 1:
         ti = time.time()
@@ -807,6 +853,27 @@ def outsideLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, s
         drawsprite(console, spriteList, playerPosX, playerPosY, playerAngle, screenWallDistance)
         playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, touchElevator = player(levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, dt)
         sprintbarupdate(console, maxSprintLevel, sprintLevel)
+        if monsterActivate == False and gunCheckCollision(spriteList[1][0], spriteList[1][1], playerPosX, playerPosY) == True:
+            spriteList[1][5] = -1
+            music_play = music.play()
+            monsterActivate = True
+        if monsterActivate == True:
+            hit, shot_play = gun(console, levelMap, spriteList, playerPosX, playerPosY, playerAngle, monsterPosX, monsterPosX, shot_play, shot)
+            monsterLife -= hit
+            if monsterLife == 0:
+                spriteList[0][5] = 5
+                music_play.stop()
+                if playerPosX >= spriteList[2][0]-0.5 and playerPosX <= spriteList[2][0]+0.5:
+                    if playerPosY >= spriteList[2][1]-0.5 and playerPosY <= spriteList[2][1]+0.5:
+                        return "map/map_lobby.yaml"
+        if monsterActivate == True and monsterLife > 0:
+            if music_play.is_playing() == False:
+                music_play = music.play()
+            monsterPosX, monsterPosY, animNum, endGame = monster(monsterPosX, monsterPosY, playerPosX, playerPosY, pathMap, monsterSpeed, animNum, spriteList, dt)
+            if endGame == True:
+                brouillage(console, 2, True)
+                return "map/map_dehors.yaml"
+        console.addstr(123, 30, str(monsterPosX))
         console.refresh()
         dt = time.time()-ti
         if limit_fps == True:
@@ -832,7 +899,12 @@ def level(console, levelFileName):
     pathMap = map2pathmap(mapFile["map_data_file"])
     timerValue = mapFile["monstre_spawn_time"]
     
-    if mapFile["monstre_spawn_time"] >= 0:
+    if mapFile["monstre_spawn_time"] == -2:
+        monsterSpeed = mapFile["monster_speed_init"]
+        levelPathMap = map2pathmap(mapFile["map_data_file"])
+        spriteList.append([229, 229, 0, 0, 0, 0])
+
+    elif mapFile["monstre_spawn_time"] >= 0:
         keyNumber = len(mapFile["key_pool"])
         monsterSpeed = mapFile["monster_speed_init"]
         levelPathMap = map2pathmap(mapFile["map_data_file"])
@@ -848,7 +920,7 @@ def level(console, levelFileName):
     if mapFile["monstre_spawn_time"] >= 0:
         return levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, timerValue, keyNumber, mapFile["key_pool"], monsterActivate, monsterPosX, monsterPosY, monsterSpeed, pathMap, mapFile["level_id"])
     elif mapFile["monstre_spawn_time"] == -2:
-        return outsideLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList)
+        return outsideLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, monsterPosX, monsterPosY, monsterSpeed, pathMap, mapFile["level_id"])
     else:
         return safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList)
 

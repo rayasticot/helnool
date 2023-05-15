@@ -1,15 +1,18 @@
 map_data_file: "map/dehors.legba" # Fichier LEGBA contenant les données de la map
 map_spr_list:
-  - pos_x: 229 # Position X du sprite dans le monde
-    pos_y: 229 # Position Y du sprite dans le monde
-    spr: 6 # Image à utiliser (voir sprite_tex_index dans code python)
+  - pos_x: 2 # Position X du sprite dans le monde
+    pos_y: 13.5 # Position Y du sprite dans le monde
+    spr: 4 # Image à utiliser (voir sprite_tex_index dans code python)
+  - pos_x: 16.5
+    pos_y: 1.5
+    spr: 12
 player_spawn_point: # Position de spawn du joueur
-  pos_x: 5.5
-  pos_y: 14.5
-  angle: 0
+  pos_x: 31.5
+  pos_y: 17.5
+  angle: -90
 monstre_spawn_point: # Position de spawn du monstre
-  pos_x: 229
-  pos_y: 229
+  pos_x: 16.5
+  pos_y: 1.5
 monstre_spawn_time: -2 # Temps avant que le monstre spawn (secondes)
 monster_speed_init: 16
 level_id: 10
