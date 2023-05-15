@@ -13,12 +13,14 @@ SY = 120
 FOV = 57.5
 HALF_FOV = 28.75
 
+WINDOW_SCALE = 6
+
 k_up, k_dw, k_rg, k_le, k_en, k_sf = 0, 0, 0, 0, 0, 0
 run = True
 
 quality = 0
 limit_fps = False
-mouseMode = 0
+mouseMode = 1
 sensibility = 1.75
 
 
@@ -27,7 +29,6 @@ def write(screen, color, y, x):
 
 
 def createimage(screen, name, y, x):
-    global screenpx
     f = open(name, "rb")
     data = f.read()
     index = 3
@@ -117,6 +118,9 @@ caisse = loadtexture("img/caisse.legba")
 caisse_d = loadtexture("img/caisse_d.legba")
 icewall = loadtexture("img/icewall.legba")
 icewall_d = loadtexture("img/icewall_d.legba")
+window = loadtexture("img/window.legba")
+backwall = loadtexture("img/backwall.legba")
+backwall_d = loadtexture("img/backwall_d.legba")
 peur1 = loadtexture("img/mons1.legba")
 peur2 = loadtexture("img/mons2.legba")
 peur3 = loadtexture("img/mons3.legba")
@@ -129,9 +133,14 @@ bureautest = loadtexture("img/bureautest.legba")
 toilette = loadtexture("img/toilette.legba")
 chickentable = loadtexture("img/chickentable.legba")
 pouletpend = loadtexture("img/pouletpend.legba")
-text_index = ((brique, brique_d), (toile, toile_d), (herb, herb_d), (filet, filet), (eye, eye_d), (labo, labo_d), (concrete, concrete_d), (box, box_d), (samsung, samsung_d), (keyhole, keyhole), (door, door), (induwall, induwall_d), (bloodwall, bloodwall_d), (colorwall, colorwall_d), (chickenwall, chickenwall_d), (chickenpanneau, chickenpanneau), (caisse, caisse_d), (icewall, icewall_d))
+text_index = ((brique, brique_d), (toile, toile_d), (herb, herb_d), (filet, filet), (eye, eye_d), (labo, labo_d), (concrete, concrete_d), (box, box_d), (samsung, samsung_d), (keyhole, keyhole), (door, door), (induwall, induwall_d), (bloodwall, bloodwall_d), (colorwall, colorwall_d), (chickenwall, chickenwall_d), (chickenpanneau, chickenpanneau), (caisse, caisse_d), (icewall, icewall_d), (window, window), (backwall, backwall_d))
 simp_index = ((160, 124), (223, 180), (238, 237), (249, 239), (70, 71), (160, 124), (223, 180), (238, 237), (249, 239), (70, 71))
 sprite_tex_index = (peur1, peur2, peur3, cle, gun, peur4, courir, retour, bureautest, toilette, chickentable, pouletpend)
+
+
+def refreshScreen(pixel_array, window):
+    scale_and_show(pixel_array, window)
+    pygame.display.flip()
 
 
 def normalize(vector):
@@ -273,9 +282,9 @@ def player(map, posx, posy, angle, sprintlevel, maxsprintlevel, dt):
     rdir = (math.cos(math.radians(angle+90)), math.sin(math.radians(angle+90)))
     
     if mouseMode == 1:
-        mouseMoveX = pygame.mouse.get_pos()[0]-115
-        pygame.mouse.set_pos((115, 65))
-        angle -= mouseMoveX*sensibility
+        mouseMoveX = pygame.mouse.get_pos()[0]-((SX*WINDOW_SCALE)/2)
+        pygame.mouse.set_pos((SX*WINDOW_SCALE)/2, (SY*WINDOW_SCALE)/2)
+        angle -= mouseMoveX*0.2*sensibility
     else:
         if k_rg == 1:
             angle -= 90*dt*sensibility
@@ -411,26 +420,26 @@ def checkinput():
         if event.type == pygame.QUIT:
             run = False
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_LEFT:
+            if event.key == pygame.K_LEFT or event.key == pygame.K_a:
                 k_le = 1
-            if event.key == pygame.K_RIGHT:
+            if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                 k_rg = 1
-            if event.key == pygame.K_UP:
+            if event.key == pygame.K_UP or event.key == pygame.K_w:
                 k_up = 1
-            if event.key == pygame.K_DOWN:
+            if event.key == pygame.K_DOWN or event.key == pygame.K_s:
                 k_dw = 1
             if event.key == pygame.K_SPACE:
                 k_en = 1
             if event.key == pygame.K_LSHIFT:
                 k_sf = 1
         if event.type == pygame.KEYUP:
-            if event.key == pygame.K_LEFT:
+            if event.key == pygame.K_LEFT or event.key == pygame.K_a:
                 k_le = 0
-            if event.key == pygame.K_RIGHT:
+            if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                 k_rg = 0
-            if event.key == pygame.K_UP:
+            if event.key == pygame.K_UP or event.key == pygame.K_w:
                 k_up = 0
-            if event.key == pygame.K_DOWN:
+            if event.key == pygame.K_DOWN or event.key == pygame.K_s:
                 k_dw = 0
             if event.key == pygame.K_SPACE:
                 k_en = 0
@@ -520,7 +529,7 @@ def uiUpdate(screen, timerValue, keyNumber, totalKeys, monsterDistance):
     createHand(screen, monsterDistance)
 
 
-def brouillage(screen, seconds, helnool):
+def brouillage(screen, window, seconds, helnool):
     pygame.mixer.music.load("snd/brouille.wav")
     pygame.mixer.music.play(-1)
     t1 = time.time()
@@ -532,7 +541,7 @@ def brouillage(screen, seconds, helnool):
                 write(screen, pixcolor, col, lin)
         if helnool == True:
             createimage(screen, "img/helnool.legba", 0, 55)
-        pygame.display.flip()
+        refreshScreen(screen, window)
     pygame.mixer.music.stop()
 
 
@@ -547,7 +556,7 @@ def createCheckElevator(screen, levels):
             createimage(screen, "img/warning.legba", YPOS[i%len(YPOS)], XPOS[int(i/len(YPOS))])
 
 
-def elevator(screen):
+def elevator(screen, window):
     global k_up
     global k_dw
     global k_rg
@@ -557,7 +566,7 @@ def elevator(screen):
     arrowIndex = 1
     arrowSpriteX = XPOS[0]-20
     arrowSpriteY = YPOS[1]
-    brouillage(screen, 0.25, False)
+    brouillage(screen, window, 0.25, False)
 
     with open("save.yaml", "r") as f:
         levels = yaml.safe_load(f)
@@ -589,17 +598,17 @@ def elevator(screen):
 
         if k_en == 1:
             if levels[arrowIndex]["unlocked"] == True:
-                brouillage(screen, 0.25, False)
+                brouillage(screen, window, 0.25, False)
                 return levels[arrowIndex]["a_name"]
 
         arrowSpriteX = XPOS[int(arrowIndex/len(YPOS))]
         arrowSpriteY = YPOS[arrowIndex%len(YPOS)]
 
         createimage(screen, "img/arrow.legba", arrowSpriteY, arrowSpriteX-21)
-        pygame.display.flip()
+        refreshScreen(screen, window)
 
 
-def safeLevelUpdate(screen, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList):
+def safeLevelUpdate(screen, window, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList):
     dt = 0
     while run == True:
         ti = time.time()
@@ -609,15 +618,15 @@ def safeLevelUpdate(screen, levelMap, playerPosX, playerPosY, playerAngle, sprin
         playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, touchElevator = player(levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, dt)
         sprintbarupdate(screen, maxSprintLevel, sprintLevel)
         if touchElevator == True:
-            return elevator(screen)
-        pygame.display.flip()
+            return elevator(screen, window)
+        refreshScreen(screen, window)
         dt = time.time()-ti
         if limit_fps == True:
             if(dt < 0.033333):
                 time.sleep(0.033333-dt)
 
 
-def levelUpdate(screen, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, timerValue, keyNumber, keyPool, monsterActivate, monsterPosX, monsterPosY, monsterSpeed, pathMap, levelId):
+def levelUpdate(screen, window, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, timerValue, keyNumber, keyPool, monsterActivate, monsterPosX, monsterPosY, monsterSpeed, pathMap, levelId):
     pygame.mixer.music.load("snd/helnoolarrive.wav")
     pygame.mixer.music.play(-1)
     pygame.mixer.music.pause()
@@ -637,7 +646,7 @@ def levelUpdate(screen, levelMap, playerPosX, playerPosY, playerAngle, sprintLev
         playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, touchElevator = player(levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, dt)
         if touchElevator == True and (keyNumber == 0):
             pygame.mixer.music.stop()
-            brouillage(screen, 0.25, False)
+            brouillage(screen, window, 0.25, False)
             saveGame("save.yaml", levelId, "completed")
             saveGame("save.yaml", levelId+1, "unlocked")
             return "map/map_lobby.yaml"
@@ -646,7 +655,7 @@ def levelUpdate(screen, levelMap, playerPosX, playerPosY, playerAngle, sprintLev
             monsterPosX, monsterPosY, animNum, endGame = monster(monsterPosX, monsterPosY, playerPosX, playerPosY, pathMap, monsterSpeed, animNum, spriteList, dt)
             if endGame == True:
                 pygame.mixer.music.stop()
-                brouillage(screen, 2, True)
+                brouillage(screen, window, 2, True)
                 return "map/map_lobby.yaml"
         sprintbarupdate(screen, maxSprintLevel, sprintLevel)
         keyNumber, timerValue, monsterSpeed = key(keyPool, spriteList, keyNumber, playerPosX, playerPosY, timerValue, monsterSpeed)
@@ -660,7 +669,7 @@ def levelUpdate(screen, levelMap, playerPosX, playerPosY, playerAngle, sprintLev
                     timerValue = 0
         elif monsterActivate == False:
             monsterActivate = True
-        pygame.display.flip()
+        refreshScreen(screen, window)
         pre_dt = time.time()-ti
         if limit_fps == True:
             if(pre_dt < 0.033333):
@@ -668,7 +677,7 @@ def levelUpdate(screen, levelMap, playerPosX, playerPosY, playerAngle, sprintLev
         dt = time.time()-ti
 
 
-def level(screen, levelFileName):
+def level(screen, window, levelFileName):
     mapFile = loadmap(levelFileName)
     spriteList = []
     keyList = []
@@ -700,23 +709,23 @@ def level(screen, levelFileName):
         spriteList.append([spr["pos_x"], spr["pos_y"], 0, 0, 0, spr["spr"]])
 
     if mapFile["monstre_spawn_time"] >= 0:
-        return levelUpdate(screen, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, timerValue, keyNumber, mapFile["key_pool"], monsterActivate, monsterPosX, monsterPosY, monsterSpeed, pathMap, mapFile["level_id"])
+        return levelUpdate(screen, window, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, timerValue, keyNumber, mapFile["key_pool"], monsterActivate, monsterPosX, monsterPosY, monsterSpeed, pathMap, mapFile["level_id"])
     else:
-        return safeLevelUpdate(screen, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList)
+        return safeLevelUpdate(screen, window, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList)
 
 
-def title(screen):
+def title(screen, window):
     pygame.mixer.music.load("snd/helpeur.wav")
     pygame.mixer.music.play(-1)
     createimage(screen, "img/title.legba", 0, 0)
     createimage(screen, "img/t0.legba", 9, 2)
-    pygame.display.flip()
+    refreshScreen(screen, window)
     frameindex = 1
     while run == True:
         checkinput()
         if quality == 0:
             createimage(screen, f"img/t{frameindex}.legba", 9, 2)
-            pygame.display.flip()
+            refreshScreen(screen, window)
             time.sleep(0.03333)
             frameindex += 1
             if frameindex == 5:
@@ -726,22 +735,32 @@ def title(screen):
             break
 
 
+def scale_and_show(pixel_array, surface):
+    scaled_size = (SX * WINDOW_SCALE, SY * WINDOW_SCALE)
+    
+    scaled_surface = pygame.transform.scale(pixel_array.surface, scaled_size)
+    
+    surface.blit(scaled_surface, (0, 0))
+
+
 def main():
     pygame.init()
-    window = pygame.display.set_mode((SX, SY))
+    
+    window_size = (230, 120)
+    window = pygame.display.set_mode((230*WINDOW_SCALE, 120*WINDOW_SCALE))
+    pixel_array = pygame.PixelArray(pygame.Surface((230, 120)))
 
-    rect = pygame.Rect(window.get_rect().center, (0, 0)).inflate(*([min(window.get_size())//2]*2))
-    pixel_array = pygame.PixelArray(window)
-    window.fill(0)
     pygame.mouse.set_visible(False)
 
-    title(pixel_array)
-    brouillage(pixel_array, 0.25, False)
+    createimage(pixel_array, "img/title.legba", 0, 0)
+
+    title(pixel_array, window)
+    brouillage(pixel_array, window, 0.25, False)
 
     newLevel = "map/map_lobby.yaml"
     
     while run == True:
-        newLevel = level(pixel_array, newLevel)
+        newLevel = level(pixel_array, window, newLevel)
 
 
 if __name__ == "__main__":

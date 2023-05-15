@@ -77,5 +77,5 @@ monstre_spawn_point: # Position de spawn du monstre
   pos_x: 19.5
   pos_y: 5.5
 monstre_spawn_time: 60 # Temps avant que le monstre spawn (secondes)
-monster_speed_init: 14
+monster_speed_init: 16
 level_id: 4

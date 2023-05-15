@@ -1,0 +1,11 @@
+settings_pygame:
+  quality: 0
+  limit_fps: false
+  mouseMode: 1
+  sensibility: 1.75
+
+settings_curses:
+  quality: 0
+  limit_fps: false
+  mouseMode: 1
+  sensibility: 1.75

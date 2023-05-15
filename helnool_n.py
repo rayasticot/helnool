@@ -89,7 +89,6 @@ def on_release(key):
 
 
 def createimage(console, name, y, x):
-    global screenpx
     f = open(name, "rb")
     data = f.read()
     index = 3
@@ -289,6 +288,88 @@ def frame(console, map, posX, posY, angle):
     return scr_dist
 
 
+def frameWithHeight(console, map, heightmap, posX, posY, angle):
+    scr_dist = []
+    linang = (angle+(FOV/2))+0.25
+    linang = linang % 360
+    for col in range(SX):
+        linang -= 0.25
+        linang = linang % 360
+        dir = [math.cos(math.radians(linang)), math.sin(math.radians(linang))]
+        pntx = posX
+        pnty = posY
+        dist = 0
+        side = 0
+        while 1:
+            pntx += dir[0]
+            pnty += dir[1]
+            dist += 1
+            if map[int(pnty)][int(pntx-dir[0])] != 0:
+                break
+            if map[int(pnty-dir[1])][int(pntx)] != 0:
+                break
+            if map[int(pnty)][int(pntx)] != 0:
+                break
+        dist -= 1
+        pntx -= dir[0]
+        pnty -= dir[1]
+        dir[0] = dir[0]*0.015625
+        dir[1] = dir[1]*0.015625
+        while 1:
+            pntx += dir[0]
+            pnty += dir[1]
+            dist += 0.015625
+            if map[int(pnty)][int(pntx-dir[0])] != 0:
+                side = 1
+                break
+            if map[int(pnty-dir[1])][int(pntx)] != 0:
+                side = 0
+                break
+        fixdist = dist*math.cos(math.radians(linang-angle))
+        scr_dist.append(fixdist)
+
+        if side == 0:
+            multiplier = heightmap[int(pnty-dir[1])][int(pntx)]
+        if side == 1:
+            multiplier = heightmap[int(pnty)][int(pntx-dir[0])]
+
+        if multiplier == 0:
+            multiplier = 1
+
+        wallSize = round(int(SY*1.5*multiplier)/fixdist)
+        groundWallSize = round(int(SY*1.5)/fixdist)
+        wallStart = round((SY-wallSize)/2)
+        groundWallStart = round((SY-groundWallSize)/2)
+
+        for lin in range(SY):
+            if side == 0:
+                color = map[int(pnty-dir[1])][int(pntx)]-1
+            if side == 1:
+                color = map[int(pnty)][int(pntx-dir[0])]-1
+            if lin < wallStart:
+                console.addstr(lin, col, " ", curses.color_pair(232))
+            elif lin > groundWallSize+groundWallStart:
+                console.addstr(lin, col, " ", curses.color_pair(28))
+            else:
+                in_x = 0
+                in_y = 0
+                pixcolor = 0
+                if quality == 0:
+                    if side == 0:
+                        in_x = round((pnty % 1)*63)
+                    else:
+                        in_x = round((pntx % 1)*63)
+                    in_y = round(((lin-wallStart)/wallSize)*(63*multiplier))%63
+                    if color == 10 and (((lin-wallStart)/wallSize)*(63*multiplier))/63 <= 10:
+                        pixcolor = text_index[0][side][in_y][in_x]
+                    else:
+                        pixcolor = text_index[color][side][in_y][in_x]
+                elif quality == 1:
+                    pixcolor = simp_index[color][side]
+                console.addstr(lin, col, " ", curses.color_pair(pixcolor))
+    return scr_dist
+
+
 def drawsprite(console, sprite_list, posX, posY, angle, scr_dist):
     sprite_loc_list = sprite_list.copy()
     screen_spr_list = []
@@ -337,7 +418,7 @@ def drawsprite(console, sprite_list, posX, posY, angle, scr_dist):
 
 def player(map, posx, posy, angle, sprintlevel, maxsprintlevel, dt):
     sprintcoef = 1
-    touchElevator = False
+    touch = 0
     if k_sf == 1 and (k_up == 1 or k_dw == 1):
         sprintcoef = 2
         if sprintlevel > 0:
@@ -386,14 +467,16 @@ def player(map, posx, posy, angle, sprintlevel, maxsprintlevel, dt):
     posy += addY
     
     if map[int(posy)][int(posx)] == 10:
-        touchElevator = True
+        touch = 1
+    elif map[int(posy)][int(posx)] == 19:
+        touch = 2
     if map[int(posy)][int(posx)] > 0:
         posx -= addX
         posy -= addY
     
     angle = angle % 360
 
-    return posx, posy, angle, sprintlevel, maxsprintlevel, touchElevator
+    return posx, posy, angle, sprintlevel, maxsprintlevel, touch
 
 
 def followPath(path, x, y, distance):
@@ -648,7 +731,7 @@ def safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, spri
         drawsprite(console, spriteList, playerPosX, playerPosY, playerAngle, screenWallDistance)
         playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, touchElevator = player(levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, dt)
         sprintbarupdate(console, maxSprintLevel, sprintLevel)
-        if touchElevator == True:
+        if touchElevator == 1:
             return elevator(console)
         console.refresh()
         dt = time.time()-ti
@@ -672,14 +755,20 @@ def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLe
         ti = time.time()
         screenWallDistance = frame(console, levelMap, playerPosX, playerPosY, playerAngle)
         drawsprite(console, spriteList, playerPosX, playerPosY, playerAngle, screenWallDistance)
-        playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, touchElevator = player(levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, dt)
-        if touchElevator == True and (keyNumber == 0):
+        playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, touch = player(levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, dt)
+        if touch == 1 and (keyNumber == 0) and levelId != 9:
             if arrive_play.is_playing() == True:
                 arrive_play.stop()
             brouillage(console, 0.25, False)
             saveGame("save.yaml", levelId, "completed")
             saveGame("save.yaml", levelId+1, "unlocked")
             return "map/map_lobby.yaml"
+        elif touch == 2:
+            if arrive_play.is_playing() == True:
+                arrive_play.stop()
+            brise = sa.WaveObject.from_wave_file("snd/brise.wav")
+            brise_play = brise.play()
+            return "map/map_dehors.yaml"
         if monsterActivate == True and levelId != 0:
             if arrive_play.is_playing() == False:
                 arrive_play = arrive.play()
@@ -707,6 +796,22 @@ def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLe
             if(pre_dt < 0.033333):
                 time.sleep(0.033333-pre_dt)
         dt = time.time()-ti
+
+
+def outsideLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList):
+    dt = 0
+    heightMap = loadtexture("map/height.legba")
+    while 1:
+        ti = time.time()
+        screenWallDistance = frameWithHeight(console, levelMap, heightMap, playerPosX, playerPosY, playerAngle)
+        drawsprite(console, spriteList, playerPosX, playerPosY, playerAngle, screenWallDistance)
+        playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, touchElevator = player(levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, dt)
+        sprintbarupdate(console, maxSprintLevel, sprintLevel)
+        console.refresh()
+        dt = time.time()-ti
+        if limit_fps == True:
+            if(dt < 0.033333):
+                time.sleep(0.033333-dt)
 
 
 def level(console, levelFileName):
@@ -742,6 +847,8 @@ def level(console, levelFileName):
 
     if mapFile["monstre_spawn_time"] >= 0:
         return levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, timerValue, keyNumber, mapFile["key_pool"], monsterActivate, monsterPosX, monsterPosY, monsterSpeed, pathMap, mapFile["level_id"])
+    elif mapFile["monstre_spawn_time"] == -2:
+        return outsideLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList)
     else:
         return safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList)
 

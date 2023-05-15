@@ -26,5 +26,5 @@
   completed: true
   unlocked: true
 - a_name: map/map_labo.yaml
-  completed: false
+  completed: true
   unlocked: true
