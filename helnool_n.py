@@ -681,7 +681,7 @@ def shootBullet(levelMap, posx, posy, angle, monx, mony):
             return 0
         deltaX = pntx-monx-0.5
         deltaY = pnty-mony-0.5
-        if math.sqrt(deltaX**2 + deltaY**2) <= 1:
+        if math.sqrt(deltaX**2 + deltaY**2) <= 5:
             return 1
 
 
