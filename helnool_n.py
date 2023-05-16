@@ -221,152 +221,118 @@ def normalize(vector):
     return vector[0]/norme, vector[1]/norme
 
 
-def frame(console, map, posX, posY, angle):
+def rayCast(mapData, rayAngle, startpointX, startpointY):
+    INITIAL_TRAVEL = 1
+    PRECISION = 20
+    direction = (math.cos(math.radians(rayAngle)), math.sin(math.radians(rayAngle)))
+    positionX = startpointX
+    positionY = startpointY
+    distance = 0
+    side = 0
+    for i in range(0, PRECISION):
+        travelDistance = INITIAL_TRAVEL/(2**i)
+        while 1:
+            positionX += direction[0]*travelDistance
+            positionY += direction[1]*travelDistance
+            distance += travelDistance
+            if mapData[int(positionY)][int(positionX-(direction[0]*travelDistance))] != 0:
+                side = 1
+                break
+            if mapData[int(positionY-(direction[1]*travelDistance))][int(positionX)] != 0:
+                side = 0
+                break
+            if mapData[int(positionY)][int(positionX)] != 0:
+                break
+        distance -= travelDistance
+        positionX -= direction[0]*travelDistance
+        positionY -= direction[1]*travelDistance
+
+    distance += travelDistance
+    if side == 0:
+        positionX += direction[0]*travelDistance
+    else:
+        positionY += direction[1]*travelDistance
+    
+    textureHit = mapData[int(positionY)][int(positionX)]-1
+    
+    return distance, side, positionX, positionY, textureHit
+
+
+def findPixelColor(mapData, pixelHeight, hitPositionX, hitPositionY, side, texture, wallStart, wallSize, totalWall, heightMultiplier):
+    if pixelHeight < wallStart:
+        return 238
+    elif pixelHeight > totalWall:
+        return 240
+    else:
+        textureX = 0
+        textureY = 0
+        pixelColor = 0
+        if quality == 0:
+            if side == 0:
+                textureX = round((hitPositionY % 1)*63)
+            else:
+                textureX = round((hitPositionX % 1)*63)
+
+            textureY = round(((pixelHeight-wallStart)/wallSize)*(63*heightMultiplier))%64
+
+            if texture == 10 and (((pixelHeight-wallStart)/wallSize)*(63*heightMultiplier))/64 <= 10 and heightMultiplier != 1: # À chier
+                pixelColor = text_index[0][side][textureY][textureX]
+            else:
+                pixelColor = text_index[texture][side][textureY][textureX]
+                
+        elif quality == 1:
+            pixelColor = simp_index[texture][side]
+        
+        return pixelColor
+
+
+def frame(console, mapData, posX, posY, angle):
     scr_dist = []
     linang = (angle+(FOV/2))+0.25
     linang = linang % 360
     for col in range(SX):
         linang -= 0.25
-        linang = linang % 360
-        dir = [math.cos(math.radians(linang)), math.sin(math.radians(linang))]
-        pntx = posX
-        pnty = posY
-        dist = 0
-        side = 0
-        while 1:
-            pntx += dir[0]
-            pnty += dir[1]
-            dist += 1
-            if map[int(pnty)][int(pntx-dir[0])] != 0:
-                break
-            if map[int(pnty-dir[1])][int(pntx)] != 0:
-                break
-            if map[int(pnty)][int(pntx)] != 0:
-                break
-        dist -= 1
-        pntx -= dir[0]
-        pnty -= dir[1]
-        dir[0] = dir[0]*0.015625
-        dir[1] = dir[1]*0.015625
-        while 1:
-            pntx += dir[0]
-            pnty += dir[1]
-            dist += 0.015625
-            if map[int(pnty)][int(pntx-dir[0])] != 0:
-                side = 1
-                break
-            if map[int(pnty-dir[1])][int(pntx)] != 0:
-                side = 0
-                break
-        fixdist = dist*math.cos(math.radians(linang-angle))
-        scr_dist.append(fixdist)
-        wallSize = round(int(SY*1.5)/fixdist)
+        linang %= 360
+        distance, side, hitPositionX, hitPositionY, textureHit = rayCast(mapData, linang, posX, posY)
+
+        fixDistance = distance*math.cos(math.radians(linang-angle))
+        scr_dist.append(fixDistance)
+        wallSize = round(int(SY*1.5)/fixDistance)
         wallStart = round((SY-wallSize)/2)
+        
         for lin in range(SY):
-            if side == 0:
-                color = map[int(pnty-dir[1])][int(pntx)]-1
-            if side == 1:
-                color = map[int(pnty)][int(pntx-dir[0])]-1
-            if lin < wallStart:
-                console.addstr(lin, col, " ", curses.color_pair(238))
-            elif lin > wallSize+wallStart:
-                console.addstr(lin, col, " ", curses.color_pair(240))
-            else:
-                in_x = 0
-                in_y = 0
-                pixcolor = 0
-                if quality == 0:
-                    if side == 0:
-                        in_x = round((pnty % 1)*63)
-                    else:
-                        in_x = round((pntx % 1)*63)
-                    in_y = round(((lin-wallStart)/wallSize)*63)
-                    pixcolor = text_index[color][side][in_y][in_x]
-                elif quality == 1:
-                    pixcolor = simp_index[color][side]
-                console.addstr(lin, col, " ", curses.color_pair(pixcolor))
+            pixelColor = findPixelColor(mapData, lin, hitPositionX, hitPositionY, side, textureHit, wallStart, wallSize, wallStart+wallSize, 1)
+            console.addstr(lin, col, " ", curses.color_pair(pixelColor))
     return scr_dist
 
 
-def frameWithHeight(console, map, heightmap, posX, posY, angle):
+def frameWithHeight(console, mapData, heightmap, posX, posY, angle):
     scr_dist = []
     linang = (angle+(FOV/2))+0.25
     linang = linang % 360
     for col in range(SX):
         linang -= 0.25
         linang = linang % 360
-        dir = [math.cos(math.radians(linang)), math.sin(math.radians(linang))]
-        pntx = posX
-        pnty = posY
-        dist = 0
-        side = 0
-        while 1:
-            pntx += dir[0]
-            pnty += dir[1]
-            dist += 1
-            if map[int(pnty)][int(pntx-dir[0])] != 0:
-                break
-            if map[int(pnty-dir[1])][int(pntx)] != 0:
-                break
-            if map[int(pnty)][int(pntx)] != 0:
-                break
-        dist -= 1
-        pntx -= dir[0]
-        pnty -= dir[1]
-        dir[0] = dir[0]*0.015625
-        dir[1] = dir[1]*0.015625
-        while 1:
-            pntx += dir[0]
-            pnty += dir[1]
-            dist += 0.015625
-            if map[int(pnty)][int(pntx-dir[0])] != 0:
-                side = 1
-                break
-            if map[int(pnty-dir[1])][int(pntx)] != 0:
-                side = 0
-                break
-        fixdist = dist*math.cos(math.radians(linang-angle))
-        scr_dist.append(fixdist)
+        distance, side, hitPositionX, hitPositionY, textureHit = rayCast(mapData, linang, posX, posY)
+
+        fixDistance = distance*math.cos(math.radians(linang-angle))
+        scr_dist.append(fixDistance)
 
         if side == 0:
-            multiplier = heightmap[int(pnty-dir[1])][int(pntx)]
+            heightMultiplier = heightmap[int(hitPositionY)][int(hitPositionX)]
         if side == 1:
-            multiplier = heightmap[int(pnty)][int(pntx-dir[0])]
+            heightMultiplier = heightmap[int(hitPositionY)][int(hitPositionX)]
+        if heightMultiplier == 0:
+            heightMultiplier = 1
 
-        if multiplier == 0:
-            multiplier = 1
-
-        wallSize = round(int(SY*1.5*multiplier)/fixdist)
-        groundWallSize = round(int(SY*1.5)/fixdist)
+        wallSize = round(int(SY*1.5*heightMultiplier)/fixDistance)
+        groundWallSize = round(int(SY*1.5)/fixDistance)
         wallStart = round((SY-wallSize)/2)
         groundWallStart = round((SY-groundWallSize)/2)
 
         for lin in range(SY):
-            if side == 0:
-                color = map[int(pnty-dir[1])][int(pntx)]-1
-            if side == 1:
-                color = map[int(pnty)][int(pntx-dir[0])]-1
-            if lin < wallStart:
-                console.addstr(lin, col, " ", curses.color_pair(232))
-            elif lin > groundWallSize+groundWallStart:
-                console.addstr(lin, col, " ", curses.color_pair(28))
-            else:
-                in_x = 0
-                in_y = 0
-                pixcolor = 0
-                if quality == 0:
-                    if side == 0:
-                        in_x = round((pnty % 1)*63)
-                    else:
-                        in_x = round((pntx % 1)*63)
-                    in_y = round(((lin-wallStart)/wallSize)*(63*multiplier))%63
-                    if color == 10 and (((lin-wallStart)/wallSize)*(63*multiplier))/63 <= 10:
-                        pixcolor = text_index[0][side][in_y][in_x]
-                    else:
-                        pixcolor = text_index[color][side][in_y][in_x]
-                elif quality == 1:
-                    pixcolor = simp_index[color][side]
-                console.addstr(lin, col, " ", curses.color_pair(pixcolor))
+            pixelColor = findPixelColor(mapData, lin, hitPositionX, hitPositionY, side, textureHit, wallStart, wallSize, groundWallStart+groundWallSize, heightMultiplier)
+            console.addstr(lin, col, " ", curses.color_pair(pixelColor))
     return scr_dist
 
 
