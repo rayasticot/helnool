@@ -20,7 +20,7 @@ run = True
 
 quality = 0
 limit_fps = False
-mouseMode = 1
+mouseMode = 0
 sensibility = 1.75
 
 
@@ -543,6 +543,19 @@ def brouillage(screen, window, seconds, helnool):
             createimage(screen, "img/helnool.legba", 0, 55)
         refreshScreen(screen, window)
     pygame.mixer.music.stop()
+
+
+def menu(screen, window):
+    positionCurseur = 0
+    while run:
+        createimage(screen, "img/elevatorbg.legba", 0, 0)
+        if k_up == 1:
+            positionCurseur -= 1
+        elif k_dw == 1:
+            positionCurseur += 1
+        positionCurseur %= 3
+    
+    
 
 
 def createCheckElevator(screen, levels):
