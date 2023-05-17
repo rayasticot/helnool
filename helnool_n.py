@@ -258,11 +258,11 @@ def rayCast(mapData, rayAngle, startpointX, startpointY):
     return distance, side, positionX, positionY, textureHit
 
 
-def findPixelColor(mapData, pixelHeight, hitPositionX, hitPositionY, side, texture, wallStart, wallSize, totalWall, heightMultiplier):
+def findPixelColor(mapData, pixelHeight, hitPositionX, hitPositionY, side, texture, wallStart, wallSize, totalWall, heightMultiplier, floorColor):
     if pixelHeight < wallStart:
-        return 238
+        return floorColor[0]
     elif pixelHeight > totalWall:
-        return 240
+        return floorColor[1]
     else:
         textureX = 0
         textureY = 0
@@ -286,7 +286,7 @@ def findPixelColor(mapData, pixelHeight, hitPositionX, hitPositionY, side, textu
         return pixelColor
 
 
-def frame(console, mapData, posX, posY, angle):
+def frame(console, mapData, posX, posY, angle, floorColor):
     scr_dist = []
     linang = (angle+(FOV/2))+0.25
     linang = linang % 360
@@ -301,12 +301,12 @@ def frame(console, mapData, posX, posY, angle):
         wallStart = round((SY-wallSize)/2)
         
         for lin in range(SY):
-            pixelColor = findPixelColor(mapData, lin, hitPositionX, hitPositionY, side, textureHit, wallStart, wallSize, wallStart+wallSize, 1)
+            pixelColor = findPixelColor(mapData, lin, hitPositionX, hitPositionY, side, textureHit, wallStart, wallSize, wallStart+wallSize, 1, floorColor)
             console.addstr(lin, col, " ", curses.color_pair(pixelColor))
     return scr_dist
 
 
-def frameWithHeight(console, mapData, heightmap, posX, posY, angle):
+def frameWithHeight(console, mapData, heightmap, posX, posY, angle, floorColor):
     scr_dist = []
     linang = (angle+(FOV/2))+0.25
     linang = linang % 360
@@ -331,7 +331,7 @@ def frameWithHeight(console, mapData, heightmap, posX, posY, angle):
         groundWallStart = round((SY-groundWallSize)/2)
 
         for lin in range(SY):
-            pixelColor = findPixelColor(mapData, lin, hitPositionX, hitPositionY, side, textureHit, wallStart, wallSize, groundWallStart+groundWallSize, heightMultiplier)
+            pixelColor = findPixelColor(mapData, lin, hitPositionX, hitPositionY, side, textureHit, wallStart, wallSize, groundWallStart+groundWallSize, heightMultiplier, floorColor)
             console.addstr(lin, col, " ", curses.color_pair(pixelColor))
     return scr_dist
 
@@ -728,7 +728,7 @@ def safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, spri
     dt = 0
     while 1:
         ti = time.time()
-        screenWallDistance = frame(console, levelMap, playerPosX, playerPosY, playerAngle)
+        screenWallDistance = frame(console, levelMap, playerPosX, playerPosY, playerAngle, (238, 240))
         drawsprite(console, spriteList, playerPosX, playerPosY, playerAngle, screenWallDistance)
         playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, touchElevator = player(levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, dt)
         sprintbarupdate(console, maxSprintLevel, sprintLevel)
@@ -754,7 +754,7 @@ def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLe
     
     while 1:
         ti = time.time()
-        screenWallDistance = frame(console, levelMap, playerPosX, playerPosY, playerAngle)
+        screenWallDistance = frame(console, levelMap, playerPosX, playerPosY, playerAngle, (238, 240))
         drawsprite(console, spriteList, playerPosX, playerPosY, playerAngle, screenWallDistance)
         playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, touch = player(levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, dt)
         if touch == 1 and (keyNumber == 0) and levelId != 9:
@@ -815,7 +815,7 @@ def outsideLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, s
     heightMap = loadtexture("map/height.legba")
     while 1:
         ti = time.time()
-        screenWallDistance = frameWithHeight(console, levelMap, heightMap, playerPosX, playerPosY, playerAngle)
+        screenWallDistance = frameWithHeight(console, levelMap, heightMap, playerPosX, playerPosY, playerAngle, (232, 28))
         drawsprite(console, spriteList, playerPosX, playerPosY, playerAngle, screenWallDistance)
         playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, touchElevator = player(levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, dt)
         sprintbarupdate(console, maxSprintLevel, sprintLevel)
