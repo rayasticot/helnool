@@ -1,0 +1,20 @@
+map_file_name: "map/map_lobby.yaml"
+height: false
+time: 0.5
+actors:
+  - 
+    - pos_x: 7
+      pos_y: 15.5
+      spr: 16
+    - pos_x: 7
+      pos_y: 15.5
+cam:
+    - pos_x: 4
+      pos_y: 15.5
+      angle: 0
+    - pos_x: 7
+      pos_y: 15.5
+actors_frame:
+  - frequency: 1
+  -
+    - 16

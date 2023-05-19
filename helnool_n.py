@@ -183,9 +183,15 @@ toilette = loadtexture("img/toilette.legba")
 chickentable = loadtexture("img/chickentable.legba")
 pouletpend = loadtexture("img/pouletpend.legba")
 toyota = loadtexture("img/toyota.legba")
+zakfront0 = loadtexture("img/zakfront0.legba")
+zakfront1 = loadtexture("img/zakfront1.legba")
+zakfront2 = loadtexture("img/zakfront2.legba")
+zakback0 = loadtexture("img/zakback0.legba")
+zaktoc0 = loadtexture("img/zaktoc0.legba")
+zaktoc1 = loadtexture("img/zaktoc1.legba")
 text_index = ((brique, brique_d), (toile, toile_d), (herb, herb_d), (filet, filet), (eye, eye_d), (labo, labo_d), (concrete, concrete_d), (box, box_d), (samsung, samsung_d), (keyhole, keyhole), (door, door), (induwall, induwall_d), (bloodwall, bloodwall_d), (colorwall, colorwall_d), (chickenwall, chickenwall_d), (chickenpanneau, chickenpanneau), (caisse, caisse_d), (icewall, icewall_d), (window, window), (backwall, backwall_d))
 simp_index = ((160, 124), (223, 180), (238, 237), (249, 239), (70, 71), (160, 124), (223, 180), (238, 237), (249, 239), (70, 71))
-sprite_tex_index = (peur1, peur2, peur3, cle, gun, peur4, courir, retour, bureautest, toilette, chickentable, pouletpend, toyota)
+sprite_tex_index = (peur1, peur2, peur3, cle, gun, peur4, courir, retour, bureautest, toilette, chickentable, pouletpend, toyota, zakfront0, zakfront1, zakfront2, zakback0, zaktoc0, zaktoc1)
 
 """
 ganiouproche = sa.WaveObject.from_wave_file("snd/ganiou_proche.wav")
@@ -231,8 +237,9 @@ def rayCast(mapData, rayAngle, startpointX, startpointY):
             if mapData[int(positionY-(direction[1]*travelDistance))][int(positionX)] != 0:
                 side = 0
                 break
-            if mapData[int(positionY)][int(positionX)] != 0:
-                break
+            if i != PRECISION-1:
+                if mapData[int(positionY)][int(positionX)] != 0:
+                    break
         distance -= travelDistance
         positionX -= direction[0]*travelDistance
         positionY -= direction[1]*travelDistance
@@ -490,6 +497,66 @@ def monster(monx, mony, posx, posy, pathMap, monsterspeed, anim_num, spr_list, d
     
     return monx, mony, anim_num, endGame
 
+
+def engineCinematic(console, fileName):
+    with open(fileName) as f:
+        cinematicInfo = yaml.safe_load(f)
+    
+    with open(cinematicInfo["map_file_name"]) as f:
+        mapFile = yaml.safe_load(f)
+
+    sprList = []
+    for sprite in mapFile["map_spr_list"]:
+        sprList.append([sprite["pos_x"], sprite["pos_y"], 0, 0, 0, sprite["spr"]])
+    actorIndex = len(sprList)
+    actorDir = []
+    for actor in cinematicInfo["actors"]:
+        sprList.append([actor[0]["pos_x"], actor[0]["pos_y"], 0, 0, 0, actor[0]["spr"]])
+        deltaPosX = actor[1]["pos_x"]-actor[0]["pos_x"]
+        deltaPosY = actor[1]["pos_y"]-actor[0]["pos_y"]
+        actorDir.append((deltaPosX, deltaPosY))
+    actorDir = tuple(actorDir)
+
+    mapData = loadtexture(mapFile["map_data_file"])
+    if cinematicInfo["height"] == True:
+        heightMap = loadtexture("map/height.legba")
+
+    camX = cinematicInfo["cam"][0]["pos_x"]
+    camY = cinematicInfo["cam"][0]["pos_y"]
+    camAngle = cinematicInfo["cam"][0]["angle"]
+    camDir = (
+        cinematicInfo["cam"][1]["pos_x"]-cinematicInfo["cam"][0]["pos_x"],
+        cinematicInfo["cam"][1]["pos_y"]-cinematicInfo["cam"][0]["pos_y"],
+    )
+    elapsedTime = 0
+    dt = 0
+
+    while 1:
+        t1 = time.time()
+        if cinematicInfo["height"] == True:
+            screenDist = frameWithHeight(console, mapData, heightMap, camX, camY, camAngle, (81, 28))
+        else:
+            screenDist = frame(console, mapData, camX, camY, camAngle, (238, 240))
+
+        drawsprite(console, sprList, camX, camY, camAngle, screenDist)
+
+        for i in range(len(cinematicInfo["actors"])):
+            initialPosX = cinematicInfo["actors"][i][0]["pos_x"]
+            initialPosY = cinematicInfo["actors"][i][0]["pos_y"]
+            sprList[actorIndex+i][0] = initialPosX + actorDir[i][0]*(elapsedTime/cinematicInfo["time"])
+            sprList[actorIndex+i][1] = initialPosY + actorDir[i][1]*(elapsedTime/cinematicInfo["time"])
+            
+            sprList[actorIndex+i][5] =  cinematicInfo["actors_frame"][i+1][int(elapsedTime/cinematicInfo["actors_frame"][0]["frequency"])%len(cinematicInfo["actors_frame"][i+1])]
+
+        camX = cinematicInfo["cam"][0]["pos_x"] + camDir[0]*(elapsedTime/cinematicInfo["time"])
+        camY = cinematicInfo["cam"][0]["pos_y"] + camDir[1]*(elapsedTime/cinematicInfo["time"])
+
+        console.refresh()
+        dt = time.time()-t1
+        elapsedTime += dt
+        if elapsedTime >= cinematicInfo["time"]:
+            break
+    
 
 def sprintbarupdate(console, maxsprintlevel, sprintlevel):
     for i in range(round(maxsprintlevel)):
@@ -930,6 +997,18 @@ def main(console):
 
     title(console, keyboard)
     brouillage(console, 0.25, False)
+
+    engineCinematic(console, "cine/cine_outside1.yaml")
+    engineCinematic(console, "cine/cine_outside2.yaml")
+    engineCinematic(console, "cine/cine_outside3.yaml")
+    engineCinematic(console, "cine/cine_outside4.yaml")
+    engineCinematic(console, "cine/cine_outside5.yaml")
+    engineCinematic(console, "cine/cine_lobby1.yaml")
+    engineCinematic(console, "cine/cine_lobby2.yaml")
+    engineCinematic(console, "cine/cine_lobby3.yaml")
+    engineCinematic(console, "cine/cine_lobby4.yaml")
+    engineCinematic(console, "cine/cine_lobby5.yaml")
+    engineCinematic(console, "cine/cine_lobby6.yaml")
 
     newLevel = "map/map_lobby.yaml"
     

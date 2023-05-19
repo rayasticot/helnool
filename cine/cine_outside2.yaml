@@ -1,0 +1,20 @@
+map_file_name: "map/map_dehors.yaml"
+height: true
+time: 1
+actors:
+  - 
+    - pos_x: 26.5
+      pos_y: 16
+      spr: 13
+    - pos_x: 26.5
+      pos_y: 16
+cam:
+    - pos_x: 29.5
+      pos_y: 16
+      angle: 180
+    - pos_x: 29.5
+      pos_y: 16
+actors_frame:
+  - frequency: 1
+  -
+    - 13
