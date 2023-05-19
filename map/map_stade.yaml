@@ -19,6 +19,6 @@ player_spawn_point: # Position de spawn du joueur
 monstre_spawn_point: # Position de spawn du monstre
   pos_x: 34.5
   pos_y: 8
-monstre_spawn_time: 45 # Temps avant que le monstre spawn (secondes)
+monstre_spawn_time: 240 # Temps avant que le monstre spawn (secondes)
 monster_speed_init: 17
 level_id: 3

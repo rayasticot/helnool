@@ -4,7 +4,7 @@ import time
 import random
 from pathfinding.core.grid import Grid
 from pathfinding.finder.a_star import AStarFinder
-from pynput import keyboard
+import pynput.keyboard
 from pynput.mouse import Button, Controller
 import simpleaudio as sa
 import yaml
@@ -13,8 +13,6 @@ SX = 230
 SY = 120
 FOV = 57.5
 HALF_FOV = 28.75
-
-k_up, k_dw, k_rg, k_le, k_en, k_sf = 0, 0, 0, 0, 0, 0
 
 mouse = Controller()
 mouse.position = (800, 800)
@@ -25,66 +23,58 @@ mouseMode = 1
 sensibility = 1.75
 
 
-def on_press(key):
-    global k_up
-    global k_dw
-    global k_rg
-    global k_le
-    global k_en
-    global k_sf
-    try:
-        if key.char == "w" or key.char == "W":
-            k_up = 1
-        elif key.char == "s" or key.char == "S":
-            k_dw = 1
-        elif key.char == "d" or key.char == "D":
-            k_rg = 1
-        elif key.char == "a" or key.char == "A":
-            k_le = 1
-    except AttributeError:
-        if key == keyboard.Key.space:
-            k_en = 1
-        elif key == keyboard.Key.shift:
-            k_sf = 1
-        elif key == keyboard.Key.up:
-            k_up = 1
-        elif key == keyboard.Key.down:
-            k_dw = 1
-        elif key == keyboard.Key.right:
-            k_rg = 1
-        elif key == keyboard.Key.left:
-            k_le = 1
+def createOnPress(keyboard):
+    def on_press(key):
+        try:
+            if key.char == "w" or key.char == "W":
+                keyboard["k_up"] = 1
+            elif key.char == "s" or key.char == "S":
+                keyboard["k_dw"] = 1
+            elif key.char == "d" or key.char == "D":
+                keyboard["k_rg"] = 1
+            elif key.char == "a" or key.char == "A":
+                keyboard["k_le"] = 1
+        except AttributeError:
+            if key == pynput.keyboard.Key.space:
+                keyboard["k_en"] = 1
+            elif key == pynput.keyboard.Key.shift:
+                keyboard["k_sf"] = 1
+            elif key == pynput.keyboard.Key.up:
+                keyboard["k_up"] = 1
+            elif key == pynput.keyboard.Key.down:
+                keyboard["k_dw"] = 1
+            elif key == pynput.keyboard.Key.right:
+                keyboard["k_rg"] = 1
+            elif key == pynput.keyboard.Key.left:
+                keyboard["k_le"] = 1
+    return on_press
 
  
-def on_release(key):
-    global k_up
-    global k_dw
-    global k_rg
-    global k_le
-    global k_en
-    global k_sf
-    try:
-        if key.char == "w" or key.char == "W":
-            k_up = 0
-        elif key.char == "s" or key.char == "S":
-            k_dw = 0
-        elif key.char == "d" or key.char == "D":
-            k_rg = 0
-        elif key.char == "a" or key.char == "A":
-            k_le = 0
-    except AttributeError:
-        if key == keyboard.Key.space:
-            k_en = 0
-        elif key == keyboard.Key.shift:
-            k_sf = 0
-        elif key == keyboard.Key.up:
-            k_up = 0
-        elif key == keyboard.Key.down:
-            k_dw = 0
-        elif key == keyboard.Key.right:
-            k_rg = 0
-        elif key == keyboard.Key.left:
-            k_le = 0
+def createOnRelease(keyboard):
+    def on_release(key):
+        try:
+            if key.char == "w" or key.char == "W":
+                keyboard["k_up"] = 0
+            elif key.char == "s" or key.char == "S":
+                keyboard["k_dw"] = 0
+            elif key.char == "d" or key.char == "D":
+                keyboard["k_rg"] = 0
+            elif key.char == "a" or key.char == "A":
+                keyboard["k_le"] = 0
+        except AttributeError:
+            if key == pynput.keyboard.Key.space:
+                keyboard["k_en"] = 0
+            elif key == pynput.keyboard.Key.shift:
+                keyboard["k_sf"] = 0
+            elif key == pynput.keyboard.Key.up:
+                keyboard["k_up"] = 0
+            elif key == pynput.keyboard.Key.down:
+                keyboard["k_dw"] = 0
+            elif key == pynput.keyboard.Key.right:
+                keyboard["k_rg"] = 0
+            elif key == pynput.keyboard.Key.left:
+                keyboard["k_le"] = 0
+    return on_release
 
 
 def createimage(console, name, y, x):
@@ -382,10 +372,10 @@ def drawsprite(console, sprite_list, posX, posY, angle, scr_dist):
                         console.addstr(lin+sprite[1], col+sprite[0], " ", curses.color_pair(pixcolor))
 
 
-def player(map, posx, posy, angle, sprintlevel, maxsprintlevel, dt):
+def player(map, posx, posy, angle, sprintlevel, maxsprintlevel, dt, keyboard):
     sprintcoef = 1
     touch = 0
-    if k_sf == 1 and (k_up == 1 or k_dw == 1):
+    if keyboard["k_sf"] == 1 and (keyboard["k_up"] == 1 or keyboard["k_dw"] == 1):
         sprintcoef = 2
         if sprintlevel > 0:
             sprintlevel -= 1*dt*30
@@ -405,23 +395,23 @@ def player(map, posx, posy, angle, sprintlevel, maxsprintlevel, dt):
         mouse.position = (800, 400)
         angle -= mouseMoveX*0.025*sensibility
     else:
-        if k_rg == 1:
+        if keyboard["k_rg"] == 1:
             angle -= 90*dt*sensibility
-        if k_le == 1:
+        if keyboard["k_le"] == 1:
             angle += 90*dt*sensibility
 
     addX, addY = 0, 0
 
-    if k_dw == 1:
+    if keyboard["k_dw"] == 1:
         addX -= pdir[0]
         addY -= pdir[1]
-    if k_up == 1:
+    if keyboard["k_up"] == 1:
         addX += pdir[0]
         addY += pdir[1]
-    if k_rg == 1 and mouseMode == 1:
+    if keyboard["k_rg"] == 1 and mouseMode == 1:
         addX -= rdir[0]
         addY -= rdir[1]
-    if k_le == 1 and mouseMode == 1:
+    if keyboard["k_le"] == 1 and mouseMode == 1:
         addX += rdir[0]
         addY += rdir[1]
 
@@ -651,11 +641,10 @@ def shootBullet(levelMap, posx, posy, angle, monx, mony):
             return 1
 
 
-def gun(console, levelMap, spr_list, posx, posy, angle, monx, mony, gunsoundplay, gunsound):
-    global k_en
+def gun(console, levelMap, spr_list, posx, posy, angle, monx, mony, gunsoundplay, gunsound, keyboard):
     createimage(console, "img/aim.legba", 60, 75)
-    if k_en == 1 and gunsoundplay.is_playing() == False:
-        k_en = 0
+    if keyboard["k_en"] == 1 and gunsoundplay.is_playing() == False:
+        keyboard["k_en"] = 0
         gunsoundplay = gunsound.play()
     
         return shootBullet(levelMap, posx, posy, angle, monx, mony), gunsoundplay
@@ -673,11 +662,7 @@ def createCheckElevator(console, levels):
             createimage(console, "img/warning.legba", YPOS[i%len(YPOS)], XPOS[int(i/len(YPOS))])
 
 
-def elevator(console):
-    global k_up
-    global k_dw
-    global k_rg
-    global k_le
+def elevator(console, keyboard):
     XPOS = (26, 136)
     YPOS = (80, 63, 46, 29, 12)
     arrowIndex = 1
@@ -692,27 +677,27 @@ def elevator(console):
         createimage(console, "img/elevatorbg.legba", 0, 0)
         createCheckElevator(console, levels)
 
-        if k_up == 1:
-            k_up = 0
+        if keyboard["k_up"] == 1:
+            keyboard["k_up"] = 0
             arrowIndex += 1
             arrowIndex %= len(XPOS)*len(YPOS)
         
-        if k_dw == 1:
-            k_dw = 0
+        if keyboard["k_dw"] == 1:
+            keyboard["k_dw"] = 0
             arrowIndex -= 1
             arrowIndex %= len(XPOS)*len(YPOS)
 
-        if k_rg == 1:
-            k_rg = 0
+        if keyboard["k_rg"] == 1:
+            keyboard["k_rg"] = 0
             arrowIndex += len(YPOS)
             arrowIndex %= len(XPOS)*len(YPOS)
         
-        if k_le == 1:
-            k_le = 0
+        if keyboard["k_le"] == 1:
+            keyboard["k_le"] = 0
             arrowIndex -= len(YPOS)
             arrowIndex %= len(XPOS)*len(YPOS)
 
-        if k_en == 1:
+        if keyboard["k_en"] == 1:
             if levels[arrowIndex]["unlocked"] == True:
                 brouillage(console, 0.25, False)
                 return levels[arrowIndex]["a_name"]
@@ -724,16 +709,16 @@ def elevator(console):
         console.refresh()
 
 
-def safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList):
+def safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, keyboard):
     dt = 0
     while 1:
         ti = time.time()
         screenWallDistance = frame(console, levelMap, playerPosX, playerPosY, playerAngle, (238, 240))
         drawsprite(console, spriteList, playerPosX, playerPosY, playerAngle, screenWallDistance)
-        playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, touchElevator = player(levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, dt)
+        playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, touchElevator = player(levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, dt, keyboard)
         sprintbarupdate(console, maxSprintLevel, sprintLevel)
         if touchElevator == 1:
-            return elevator(console)
+            return elevator(console, keyboard)
         console.refresh()
         dt = time.time()-ti
         if limit_fps == True:
@@ -741,7 +726,7 @@ def safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, spri
                 time.sleep(0.033333-dt)
 
 
-def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, timerValue, keyNumber, keyPool, monsterActivate, monsterPosX, monsterPosY, monsterSpeed, pathMap, levelId):
+def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, timerValue, keyNumber, keyPool, monsterActivate, monsterPosX, monsterPosY, monsterSpeed, pathMap, levelId, keyboard):
     arrive = sa.WaveObject.from_wave_file("snd/helnoolarrive.wav")
     arrive_play = arrive.play()
     arrive_play.stop()
@@ -756,7 +741,7 @@ def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLe
         ti = time.time()
         screenWallDistance = frame(console, levelMap, playerPosX, playerPosY, playerAngle, (238, 240))
         drawsprite(console, spriteList, playerPosX, playerPosY, playerAngle, screenWallDistance)
-        playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, touch = player(levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, dt)
+        playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, touch = player(levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, dt, keyboard)
         if touch == 1 and (keyNumber == 0) and levelId != 9:
             if arrive_play.is_playing() == True:
                 arrive_play.stop()
@@ -799,7 +784,7 @@ def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLe
         dt = time.time()-ti
 
 
-def outsideLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, monsterPosX, monsterPosY, monsterSpeed, pathMap, levelId):
+def outsideLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, monsterPosX, monsterPosY, monsterSpeed, pathMap, levelId, keyboard):
     dt = 0
     monsterActivate = False
     monsterLife = 1
@@ -817,16 +802,16 @@ def outsideLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, s
         ti = time.time()
         screenWallDistance = frameWithHeight(console, levelMap, heightMap, playerPosX, playerPosY, playerAngle, (232, 28))
         drawsprite(console, spriteList, playerPosX, playerPosY, playerAngle, screenWallDistance)
-        playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, touchElevator = player(levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, dt)
+        playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, touchElevator = player(levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, dt, keyboard)
         sprintbarupdate(console, maxSprintLevel, sprintLevel)
         if monsterActivate == False and gunCheckCollision(spriteList[1][0], spriteList[1][1], playerPosX, playerPosY) == True:
             spriteList[1][5] = -1
             music_play = music.play()
             monsterActivate = True
         if monsterActivate == True:
-            hit, shot_play = gun(console, levelMap, spriteList, playerPosX, playerPosY, playerAngle, monsterPosX, monsterPosX, shot_play, shot)
+            hit, shot_play = gun(console, levelMap, spriteList, playerPosX, playerPosY, playerAngle, monsterPosX, monsterPosX, shot_play, shot, keyboard)
             monsterLife -= hit
-            if monsterLife == 0:
+            if monsterLife <= 0:
                 spriteList[0][5] = 5
                 music_play.stop()
                 if playerPosX >= spriteList[2][0]-0.5 and playerPosX <= spriteList[2][0]+0.5:
@@ -847,7 +832,7 @@ def outsideLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, s
                 time.sleep(0.033333-dt)
 
 
-def level(console, levelFileName):
+def level(console, levelFileName, keyboard):
     mapFile = loadmap(levelFileName)
     spriteList = []
     keyList = []
@@ -884,14 +869,14 @@ def level(console, levelFileName):
         spriteList.append([spr["pos_x"], spr["pos_y"], 0, 0, 0, spr["spr"]])
 
     if mapFile["monstre_spawn_time"] >= 0:
-        return levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, timerValue, keyNumber, mapFile["key_pool"], monsterActivate, monsterPosX, monsterPosY, monsterSpeed, pathMap, mapFile["level_id"])
+        return levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, timerValue, keyNumber, mapFile["key_pool"], monsterActivate, monsterPosX, monsterPosY, monsterSpeed, pathMap, mapFile["level_id"], keyboard)
     elif mapFile["monstre_spawn_time"] == -2:
-        return outsideLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, monsterPosX, monsterPosY, monsterSpeed, pathMap, mapFile["level_id"])
+        return outsideLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, monsterPosX, monsterPosY, monsterSpeed, pathMap, mapFile["level_id"], keyboard)
     else:
-        return safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList)
+        return safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, keyboard)
 
 
-def title(console):
+def title(console, keyboard):
     musique = sa.WaveObject.from_wave_file("snd/helpeur.wav")
     play = musique.play()
     createimage(console, "img/title.legba", 0, 0)
@@ -908,7 +893,7 @@ def title(console):
                 frameindex = 0
         if play.is_playing() != True:
             play = musique.play()
-        if k_en == 1:
+        if keyboard["k_en"] == 1:
             play.stop()
             console.clear()
             break
@@ -916,7 +901,6 @@ def title(console):
 
 
 def main(console):
-    global dt
     scr_size = console.getmaxyx()
     if scr_size[0] < SY or scr_size[1] < SX:
         curses.endwin()
@@ -932,16 +916,25 @@ def main(console):
     for i in range(255):
         curses.init_pair(i+1, 0, i+1)
 
-    listener = keyboard.Listener(on_press=on_press, on_release=on_release)
+    keyboard = {
+        "k_up": 0,
+        "k_dw": 0,
+        "k_le": 0,
+        "k_rg": 0,
+        "k_en": 0,
+        "k_sf": 0
+    }
+
+    listener = pynput.keyboard.Listener(on_press=createOnPress(keyboard), on_release=createOnRelease(keyboard))
     listener.start()
 
-    title(console)
+    title(console, keyboard)
     brouillage(console, 0.25, False)
 
     newLevel = "map/map_lobby.yaml"
     
     while 1:
-        newLevel = level(console, newLevel)
+        newLevel = level(console, newLevel, keyboard)
 
 
 if __name__ == "__main__":
