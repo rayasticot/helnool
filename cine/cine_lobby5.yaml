@@ -10,7 +10,7 @@ actors:
       pos_y: 15.5
 cam:
     - pos_x: 4
-      pos_y: 15.5
+      pos_y: 14
       angle: 0
     - pos_x: 4
       pos_y: 15.5

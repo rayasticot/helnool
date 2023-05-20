@@ -152,6 +152,10 @@ concrete = loadtexture("img/concrete.legba")
 concrete_d = loadtexture("img/concrete_d.legba")
 box = loadtexture("img/box.legba")
 box_d = loadtexture("img/box_d.legba")
+boxdark = loadtexture("img/boxdark.legba")
+boxdark_d = loadtexture("img/boxdark_d.legba")
+boxlight = loadtexture("img/boxlight.legba")
+boxlight_d = loadtexture("img/boxlight_d.legba")
 door = loadtexture("img/door.legba")
 induwall = loadtexture("img/induwall.legba")
 induwall_d = loadtexture("img/induwall_d.legba")
@@ -189,7 +193,7 @@ zakfront2 = loadtexture("img/zakfront2.legba")
 zakback0 = loadtexture("img/zakback0.legba")
 zaktoc0 = loadtexture("img/zaktoc0.legba")
 zaktoc1 = loadtexture("img/zaktoc1.legba")
-text_index = ((brique, brique_d), (toile, toile_d), (herb, herb_d), (filet, filet), (eye, eye_d), (labo, labo_d), (concrete, concrete_d), (box, box_d), (samsung, samsung_d), (keyhole, keyhole), (door, door), (induwall, induwall_d), (bloodwall, bloodwall_d), (colorwall, colorwall_d), (chickenwall, chickenwall_d), (chickenpanneau, chickenpanneau), (caisse, caisse_d), (icewall, icewall_d), (window, window), (backwall, backwall_d))
+text_index = ((brique, brique_d), (toile, toile_d), (herb, herb_d), (filet, filet), (eye, eye_d), (labo, labo_d), (concrete, concrete_d), (box, box_d), (samsung, samsung_d), (keyhole, keyhole), (door, door), (induwall, induwall_d), (bloodwall, bloodwall_d), (colorwall, colorwall_d), (chickenwall, chickenwall_d), (chickenpanneau, chickenpanneau), (caisse, caisse_d), (icewall, icewall_d), (window, window), (backwall, backwall_d), (boxdark, boxdark_d), (boxlight, boxlight_d))
 simp_index = ((160, 124), (223, 180), (238, 237), (249, 239), (70, 71), (160, 124), (223, 180), (238, 237), (249, 239), (70, 71))
 sprite_tex_index = (peur1, peur2, peur3, cle, gun, peur4, courir, retour, bureautest, toilette, chickentable, pouletpend, toyota, zakfront0, zakfront1, zakfront2, zakback0, zaktoc0, zaktoc1)
 
@@ -997,7 +1001,7 @@ def main(console):
 
     title(console, keyboard)
     brouillage(console, 0.25, False)
-
+    """
     engineCinematic(console, "cine/cine_outside1.yaml")
     engineCinematic(console, "cine/cine_outside2.yaml")
     engineCinematic(console, "cine/cine_outside3.yaml")
@@ -1007,6 +1011,7 @@ def main(console):
     engineCinematic(console, "cine/cine_lobby2.yaml")
     engineCinematic(console, "cine/cine_lobby3.yaml")
     engineCinematic(console, "cine/cine_lobby4.yaml")
+    """
     engineCinematic(console, "cine/cine_lobby5.yaml")
     engineCinematic(console, "cine/cine_lobby6.yaml")
 

@@ -16,15 +16,15 @@
 - a_name: map/map_resto.yaml
   completed: true
   unlocked: true
-- a_name: map/INSERTMAP.yaml
-  completed: false
+- a_name: map/map_entrepot.yaml
+  completed: true
   unlocked: true
-- a_name: map/INSERTMAP.yaml
-  completed: false
-  unlocked: false
+- a_name: map/map_donjon.yaml
+  completed: true
+  unlocked: true
 - a_name: map/map_backroom.yaml
   completed: true
   unlocked: true
 - a_name: map/map_labo.yaml
-  completed: true
+  completed: false
   unlocked: true

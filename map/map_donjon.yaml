@@ -1,0 +1,23 @@
+map_data_file: "map/donjon.legba" # Fichier LEGBA contenant les données de la map
+map_spr_list:
+  - pos_x: 3.5
+    pos_y: 18.5
+    spr: 10
+key_pool: [ # Liste des clés avec leur position qui peuvent spawn. Une seul clé va spawn par ligne.
+  [[14.5, 26.5],],
+  [[14.5, 5.5],],
+  [[4.5, 22.5],],
+  [[24.5, 22.5],],
+  [[24.5, 5.5],],
+  [[4.5, 5.5],]
+]
+player_spawn_point: # Position de spawn du joueur
+  pos_x: 14.51
+  pos_y: 16.51
+  angle: 90
+monstre_spawn_point: # Position de spawn du monstre
+  pos_x: 14.5
+  pos_y: 11.5
+monstre_spawn_time: 120 # Temps avant que le monstre spawn (secondes)
+monster_speed_init: 15
+level_id: 7
