@@ -560,6 +560,20 @@ def engineCinematic(console, fileName):
         elapsedTime += dt
         if elapsedTime >= cinematicInfo["time"]:
             break
+
+
+def ending(console, hard, keyboard):
+    if hard == False:
+        saveGame("save.yaml", 9, "completed")
+        createimage(console, "img/endgame.legba", 0, 0)
+    else:
+        saveGame("save.yaml", 9, "h_completed")
+        createimage(console, "img/endgamehard.legba", 0, 0)
+    console.refresh()
+
+    while 1:
+        if keyboard["k_en"] == 1:
+            return "map/map_lobby.yaml", hard
     
 
 def sprintbarupdate(console, maxsprintlevel, sprintlevel):
@@ -722,15 +736,25 @@ def gun(console, levelMap, spr_list, posx, posy, angle, monx, mony, gunsoundplay
     return 0, gunsoundplay
 
 
-def createCheckElevator(console, levels):
+def createCheckElevator(console, sauvegarde, hard):
     XPOS = (26, 136)
     YPOS = (80, 63, 46, 29, 12)
 
-    for i in range(len(levels)):
-        if levels[i]["completed"] == True:
+    for i in range(len(sauvegarde)):
+        if hard == True:
+            complete = sauvegarde[i]["h_completed"]
+            unlocked = sauvegarde[i]["h_unlocked"]
+        else:
+            complete = sauvegarde[i]["completed"]
+            unlocked = sauvegarde[i]["unlocked"]
+        if complete == True:
             createimage(console, "img/check.legba", YPOS[i%len(YPOS)], XPOS[int(i/len(YPOS))]+73)
-        if levels[i]["unlocked"] == False:
+
+        if unlocked == False:
             createimage(console, "img/warning.legba", YPOS[i%len(YPOS)], XPOS[int(i/len(YPOS))])
+
+    if sauvegarde[9]["completed"] == False:
+        createimage(console, "img/heltape.legba", 98, XPOS[0])
 
 
 def elevator(console, keyboard):
@@ -742,39 +766,58 @@ def elevator(console, keyboard):
     brouillage(console, 0.25, False)
 
     with open("save.yaml", "r") as f:
+        sauvegarde = yaml.safe_load(f)
+    with open("levels.yaml", "r") as f:
         levels = yaml.safe_load(f)
+    with open("levels_hard.yaml", "r") as f:
+        levels_hard = yaml.safe_load(f)
+
+    hard = False
 
     while 1:
-        createimage(console, "img/elevatorbg.legba", 0, 0)
-        createCheckElevator(console, levels)
+        if hard == False:
+            createimage(console, "img/elevatorbg.legba", 0, 0)
+            createCheckElevator(console, sauvegarde, hard)
+        else:
+            createimage(console, "img/elevatorburnbg.legba", 0, 0)
+            createCheckElevator(console, sauvegarde, hard)
 
         if keyboard["k_up"] == 1:
             keyboard["k_up"] = 0
             arrowIndex += 1
-            arrowIndex %= len(XPOS)*len(YPOS)
         
         if keyboard["k_dw"] == 1:
             keyboard["k_dw"] = 0
             arrowIndex -= 1
-            arrowIndex %= len(XPOS)*len(YPOS)
 
         if keyboard["k_rg"] == 1:
             keyboard["k_rg"] = 0
             arrowIndex += len(YPOS)
-            arrowIndex %= len(XPOS)*len(YPOS)
         
         if keyboard["k_le"] == 1:
             keyboard["k_le"] = 0
             arrowIndex -= len(YPOS)
+
+        if sauvegarde[9]["completed"] == True:
+            arrowIndex %= len(XPOS)*len(YPOS)+1
+        else:
             arrowIndex %= len(XPOS)*len(YPOS)
 
         if keyboard["k_en"] == 1:
-            if levels[arrowIndex]["unlocked"] == True:
-                brouillage(console, 0.25, False)
-                return levels[arrowIndex]["a_name"]
+            brouillage(console, 0.25, False)
+            if arrowIndex == 10:
+                hard = not(hard)
+            elif hard == False and sauvegarde[arrowIndex]["unlocked"] == True:
+                return levels[arrowIndex], False
+            elif hard == True and sauvegarde[arrowIndex]["h_unlocked"] == True:
+                return levels_hard[arrowIndex], True
 
-        arrowSpriteX = XPOS[int(arrowIndex/len(YPOS))]
-        arrowSpriteY = YPOS[arrowIndex%len(YPOS)]
+        if arrowIndex == 10:
+            arrowSpriteX = XPOS[0]
+            arrowSpriteY = 93
+        else:
+            arrowSpriteX = XPOS[int(arrowIndex/len(YPOS))]
+            arrowSpriteY = YPOS[arrowIndex%len(YPOS)]
 
         createimage(console, "img/arrow.legba", arrowSpriteY, arrowSpriteX-21)
         console.refresh()
@@ -797,7 +840,7 @@ def safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, spri
                 time.sleep(0.033333-dt)
 
 
-def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, timerValue, keyNumber, keyPool, monsterActivate, monsterPosX, monsterPosY, monsterSpeed, pathMap, levelId, keyboard):
+def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, timerValue, keyNumber, keyPool, monsterActivate, monsterPosX, monsterPosY, monsterSpeed, pathMap, levelId, hard, keyboard):
     arrive = sa.WaveObject.from_wave_file("snd/helnoolarrive.wav")
     arrive_play = arrive.play()
     arrive_play.stop()
@@ -817,15 +860,19 @@ def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLe
             if arrive_play.is_playing() == True:
                 arrive_play.stop()
             brouillage(console, 0.25, False)
-            saveGame("save.yaml", levelId, "completed")
-            saveGame("save.yaml", levelId+1, "unlocked")
-            return "map/map_lobby.yaml"
+            if hard == False:
+                saveGame("save.yaml", levelId, "completed")
+                saveGame("save.yaml", levelId+1, "unlocked")
+            else:
+                saveGame("save.yaml", levelId, "h_completed")
+                saveGame("save.yaml", levelId+1, "h_unlocked")
+            return "map/map_lobby.yaml", hard
         elif touch == 2:
             if arrive_play.is_playing() == True:
                 arrive_play.stop()
             brise = sa.WaveObject.from_wave_file("snd/brise.wav")
             brise_play = brise.play()
-            return "map/map_dehors.yaml"
+            return "map/map_dehors.yaml", hard
         if monsterActivate == True and levelId != 0:
             if arrive_play.is_playing() == False:
                 arrive_play = arrive.play()
@@ -834,7 +881,7 @@ def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLe
                 if arrive_play.is_playing() == True:
                     arrive_play.stop()
                 brouillage(console, 2, True)
-                return "map/map_lobby.yaml"
+                return "map/map_lobby.yaml", hard
         sprintbarupdate(console, maxSprintLevel, sprintLevel)
         keyNumber, timerValue, monsterSpeed = key(keyPool, spriteList, keyNumber, playerPosX, playerPosY, timerValue, monsterSpeed)
         uiUpdate(console, timerValue, keyNumber, len(keyPool), spriteList[0][3])
@@ -855,7 +902,7 @@ def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLe
         dt = time.time()-ti
 
 
-def outsideLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, monsterPosX, monsterPosY, monsterSpeed, pathMap, levelId, keyboard):
+def outsideLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, monsterPosX, monsterPosY, monsterSpeed, pathMap, levelId, hard, keyboard):
     dt = 0
     monsterActivate = False
     monsterLife = 1
@@ -887,14 +934,14 @@ def outsideLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, s
                 music_play.stop()
                 if playerPosX >= spriteList[2][0]-0.5 and playerPosX <= spriteList[2][0]+0.5:
                     if playerPosY >= spriteList[2][1]-0.5 and playerPosY <= spriteList[2][1]+0.5:
-                        return "map/map_lobby.yaml"
+                        return ending(console, hard, keyboard)
         if monsterActivate == True and monsterLife > 0:
             if music_play.is_playing() == False:
                 music_play = music.play()
             monsterPosX, monsterPosY, animNum, endGame = monster(monsterPosX, monsterPosY, playerPosX, playerPosY, pathMap, monsterSpeed, animNum, spriteList, dt)
             if endGame == True:
                 brouillage(console, 2, True)
-                return "map/map_dehors.yaml"
+                return "map/map_dehors.yaml", hard
         console.addstr(123, 30, str(monsterPosX))
         console.refresh()
         dt = time.time()-ti
@@ -903,7 +950,7 @@ def outsideLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, s
                 time.sleep(0.033333-dt)
 
 
-def level(console, levelFileName, keyboard):
+def level(console, levelFileName, hard, keyboard):
     mapFile = loadmap(levelFileName)
     spriteList = []
     keyList = []
@@ -940,9 +987,9 @@ def level(console, levelFileName, keyboard):
         spriteList.append([spr["pos_x"], spr["pos_y"], 0, 0, 0, spr["spr"]])
 
     if mapFile["monstre_spawn_time"] >= 0:
-        return levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, timerValue, keyNumber, mapFile["key_pool"], monsterActivate, monsterPosX, monsterPosY, monsterSpeed, pathMap, mapFile["level_id"], keyboard)
+        return levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, timerValue, keyNumber, mapFile["key_pool"], monsterActivate, monsterPosX, monsterPosY, monsterSpeed, pathMap, mapFile["level_id"], hard, keyboard)
     elif mapFile["monstre_spawn_time"] == -2:
-        return outsideLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, monsterPosX, monsterPosY, monsterSpeed, pathMap, mapFile["level_id"], keyboard)
+        return outsideLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, monsterPosX, monsterPosY, monsterSpeed, pathMap, mapFile["level_id"], hard, keyboard)
     else:
         return safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, keyboard)
 
@@ -1001,7 +1048,7 @@ def main(console):
 
     title(console, keyboard)
     brouillage(console, 0.25, False)
-    """
+
     engineCinematic(console, "cine/cine_outside1.yaml")
     engineCinematic(console, "cine/cine_outside2.yaml")
     engineCinematic(console, "cine/cine_outside3.yaml")
@@ -1011,14 +1058,14 @@ def main(console):
     engineCinematic(console, "cine/cine_lobby2.yaml")
     engineCinematic(console, "cine/cine_lobby3.yaml")
     engineCinematic(console, "cine/cine_lobby4.yaml")
-    """
     engineCinematic(console, "cine/cine_lobby5.yaml")
     engineCinematic(console, "cine/cine_lobby6.yaml")
 
     newLevel = "map/map_lobby.yaml"
+    hard = False
     
     while 1:
-        newLevel = level(console, newLevel, keyboard)
+        newLevel, hard = level(console, newLevel, hard, keyboard)
 
 
 if __name__ == "__main__":

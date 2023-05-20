@@ -1,0 +1,21 @@
+map_data_file: "map/backroom.legba" # Fichier LEGBA contenant les données de la map
+map_spr_list:
+  - pos_x: 3.5
+    pos_y: 18.5
+    spr: 10
+key_pool: [ # Liste des clés avec leur position qui peuvent spawn. Une seul clé va spawn par ligne.
+  [[20.5, 21.5],],
+  [[8.5, 4],],
+  [[4.5, 19.5],],
+  [[18.5, 13.5],],
+]
+player_spawn_point: # Position de spawn du joueur
+  pos_x: 15.6
+  pos_y: 13.6
+  angle: 180
+monstre_spawn_point: # Position de spawn du monstre
+  pos_x: 1.5
+  pos_y: 1.5
+monstre_spawn_time: 60 # Temps avant que le monstre spawn (secondes)
+monster_speed_init: 13
+level_id: 8

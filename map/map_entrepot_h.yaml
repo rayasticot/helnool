@@ -1,0 +1,21 @@
+map_data_file: "map/entrepot.legba" # Fichier LEGBA contenant les données de la map
+map_spr_list:
+  - pos_x: 3.5
+    pos_y: 18.5
+    spr: 10
+key_pool: [ # Liste des clés avec leur position qui peuvent spawn. Une seul clé va spawn par ligne.
+  [[7.5, 16.5],],
+  [[28.5, 11],],
+  [[20.5, 27.5],],
+  [[17.5, 30.5],],
+]
+player_spawn_point: # Position de spawn du joueur
+  pos_x: 4.5
+  pos_y: 5.5
+  angle: 0
+monstre_spawn_point: # Position de spawn du monstre
+  pos_x: 18
+  pos_y: 14
+monstre_spawn_time: 30 # Temps avant que le monstre spawn (secondes)
+monster_speed_init: 12
+level_id: 6

@@ -1,0 +1,98 @@
+map_data_file: "map/resto.legba" # Fichier LEGBA contenant les données de la map
+map_spr_list:
+  - pos_x: 3.5
+    pos_y: 18.5
+    spr: 10
+  - pos_x: 5.5
+    pos_y: 18.5
+    spr: 10
+  - pos_x: 24.5
+    pos_y: 19.5
+    spr: 10
+  - pos_x: 27.5
+    pos_y: 19.5
+    spr: 10
+  - pos_x: 3.5
+    pos_y: 20.5
+    spr: 10
+  - pos_x: 5.5
+    pos_y: 20.5
+    spr: 10
+  - pos_x: 9.5
+    pos_y: 20.5
+    spr: 10
+  - pos_x: 11.5
+    pos_y: 20.5
+    spr: 10
+  - pos_x: 15.5
+    pos_y: 20.5
+    spr: 10
+  - pos_x: 17.5
+    pos_y: 20.5
+    spr: 10
+  - pos_x: 24.5
+    pos_y: 22.5
+    spr: 10
+  - pos_x: 27.5
+    pos_y: 22.5
+    spr: 10
+  - pos_x: 3.5
+    pos_y: 24.5
+    spr: 10
+  - pos_x: 5.5
+    pos_y: 24.5
+    spr: 10
+  - pos_x: 9.5
+    pos_y: 24.5
+    spr: 10
+  - pos_x: 11.5
+    pos_y: 24.5
+    spr: 10
+  - pos_x: 15.5
+    pos_y: 24.5
+    spr: 10
+  - pos_x: 17.5
+    pos_y: 24.5
+    spr: 10
+  - pos_x: 3.5
+    pos_y: 26.5
+    spr: 10
+  - pos_x: 5.5
+    pos_y: 26.5
+    spr: 10
+  - pos_x: 9.5
+    pos_y: 26.5
+    spr: 10
+  - pos_x: 11.5
+    pos_y: 26.5
+    spr: 10
+  - pos_x: 15.5
+    pos_y: 26.5
+    spr: 10
+  - pos_x: 17.5
+    pos_y: 26.5
+    spr: 10
+  - pos_x: 20.5
+    pos_y: 7.5
+    spr: 11
+  - pos_x: 18.5
+    pos_y: 5.5
+    spr: 11
+  - pos_x: 21.5
+    pos_y: 8.5
+    spr: 11
+key_pool: [ # Liste des clés avec leur position qui peuvent spawn. Une seul clé va spawn par ligne.
+  [[4.5, 22.5],],
+  [[26.5, 13],],
+  [[10, 5.5], [2.5, 5.5], [4.5, 12.5]],
+]
+player_spawn_point: # Position de spawn du joueur
+  pos_x: 27.6
+  pos_y: 27.6
+  angle: 270
+monstre_spawn_point: # Position de spawn du monstre
+  pos_x: 18.5
+  pos_y: 7
+monstre_spawn_time: 20 # Temps avant que le monstre spawn (secondes)
+monster_speed_init: 13
+level_id: 5
