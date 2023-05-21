@@ -14,26 +14,26 @@
   h_completed: true
   h_unlocked: true
   unlocked: true
-- completed: false
+- completed: true
   h_completed: true
   h_unlocked: true
   unlocked: true
-- completed: false
+- completed: true
   h_completed: true
   h_unlocked: true
-  unlocked: false
-- completed: false
+  unlocked: true
+- completed: true
   h_completed: true
   h_unlocked: true
-  unlocked: false
-- completed: false
+  unlocked: true
+- completed: true
   h_completed: true
   h_unlocked: true
-  unlocked: false
-- completed: false
+  unlocked: true
+- completed: true
   h_completed: true
   h_unlocked: true
-  unlocked: false
+  unlocked: true
 - completed: true
   h_completed: true
   h_unlocked: true

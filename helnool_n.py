@@ -573,6 +573,7 @@ def ending(console, hard, keyboard):
 
     while 1:
         if keyboard["k_en"] == 1:
+            brouillage(console, 0.25, False)
             return "map/map_lobby.yaml", hard
     
 
@@ -772,9 +773,14 @@ def elevator(console, keyboard):
     with open("levels_hard.yaml", "r") as f:
         levels_hard = yaml.safe_load(f)
 
+    musique = sa.WaveObject.from_wave_file("snd/ascenseur.wav")
+    play = musique.play()
+
     hard = False
 
     while 1:
+        if play.is_playing() == False:
+            play = musique.play()
         if hard == False:
             createimage(console, "img/elevatorbg.legba", 0, 0)
             createCheckElevator(console, sauvegarde, hard)
@@ -806,10 +812,22 @@ def elevator(console, keyboard):
         if keyboard["k_en"] == 1:
             brouillage(console, 0.25, False)
             if arrowIndex == 10:
+                if play.is_playing() == True:
+                    play.stop()
                 hard = not(hard)
+                if hard == True:
+                    musique = sa.WaveObject.from_wave_file("snd/ascenseurfeu.wav")
+                    play = musique.play()
+                else:
+                    musique = sa.WaveObject.from_wave_file("snd/ascenseur.wav")
+                    play = musique.play()
             elif hard == False and sauvegarde[arrowIndex]["unlocked"] == True:
+                if play.is_playing() == True:
+                    play.stop()
                 return levels[arrowIndex], False
             elif hard == True and sauvegarde[arrowIndex]["h_unlocked"] == True:
+                if play.is_playing() == True:
+                    play.stop()
                 return levels_hard[arrowIndex], True
 
         if arrowIndex == 10:
@@ -1018,6 +1036,20 @@ def title(console, keyboard):
         console.addch(SY+1, SX+1, " ")
 
 
+def playSmallCinematic(console):
+    engineCinematic(console, "cine/cine_lobby5.yaml")
+    engineCinematic(console, "cine/cine_lobby6.yaml")
+
+
+def playFullCinematic(console):
+    for i in range(5):
+        engineCinematic(console, "cine/cine_outside" + str(i+1) + ".yaml")
+    for i in range(4):
+        engineCinematic(console, "cine/cine_lobby" + str(i+1) + ".yaml")
+
+    playSmallCinematic(console)
+
+
 def main(console):
     scr_size = console.getmaxyx()
     if scr_size[0] < SY or scr_size[1] < SX:
@@ -1048,18 +1080,13 @@ def main(console):
 
     title(console, keyboard)
     brouillage(console, 0.25, False)
-
-    engineCinematic(console, "cine/cine_outside1.yaml")
-    engineCinematic(console, "cine/cine_outside2.yaml")
-    engineCinematic(console, "cine/cine_outside3.yaml")
-    engineCinematic(console, "cine/cine_outside4.yaml")
-    engineCinematic(console, "cine/cine_outside5.yaml")
-    engineCinematic(console, "cine/cine_lobby1.yaml")
-    engineCinematic(console, "cine/cine_lobby2.yaml")
-    engineCinematic(console, "cine/cine_lobby3.yaml")
-    engineCinematic(console, "cine/cine_lobby4.yaml")
-    engineCinematic(console, "cine/cine_lobby5.yaml")
-    engineCinematic(console, "cine/cine_lobby6.yaml")
+    
+    with open("save.yaml") as f:
+        savedata = yaml.safe_load(f)
+        if savedata[0]["completed"] == True or savedata[2]["completed"] == True:
+            playSmallCinematic(console)
+        else:
+            playFullCinematic(console)
 
     newLevel = "map/map_lobby.yaml"
     hard = False
