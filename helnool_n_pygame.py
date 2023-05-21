@@ -545,15 +545,12 @@ def brouillage(screen, window, seconds, helnool):
     pygame.mixer.music.stop()
 
 
-def menu(screen, window):
+def menu(screen, window, keyboard):
     positionCurseur = 0
-    while run:
-        createimage(screen, "img/elevatorbg.legba", 0, 0)
-        if k_up == 1:
-            positionCurseur -= 1
-        elif k_dw == 1:
-            positionCurseur += 1
-        positionCurseur %= 3
+    XPOS = 82
+    YPOS = (46, 67, 89)
+    arrowSpriteX = XPOS
+    arrowSpriteY = YPOS[0]
     
     
 
@@ -662,7 +659,7 @@ def levelUpdate(screen, window, levelMap, playerPosX, playerPosY, playerAngle, s
             brouillage(screen, window, 0.25, False)
             saveGame("save.yaml", levelId, "completed")
             saveGame("save.yaml", levelId+1, "unlocked")
-            return "map/map_lobby.yaml"
+            return elevator(screen, window)
         if monsterActivate == True and levelId != 0:
             pygame.mixer.music.unpause()
             monsterPosX, monsterPosY, animNum, endGame = monster(monsterPosX, monsterPosY, playerPosX, playerPosY, pathMap, monsterSpeed, animNum, spriteList, dt)
