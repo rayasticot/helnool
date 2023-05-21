@@ -736,6 +736,33 @@ def gun(console, levelMap, spr_list, posx, posy, angle, monx, mony, gunsoundplay
         return shootBullet(levelMap, posx, posy, angle, monx, mony), gunsoundplay
     return 0, gunsoundplay
 
+def menu(console, keyboard):
+    positionCurseur = 0
+    XPOS = 82
+    YPOS = (46, 67, 89)
+    arrowSpriteX = XPOS
+    arrowSpriteY = YPOS[0]
+    while 1:
+        createimage(console, "img/pause.legba", 0, 0)
+        if keyboard["k_up"] == 1:
+            positionCurseur -= 1
+        if keyboard["k_dw"] == 1:
+            positionCurseur += 1
+        if keyboard["k_en"] == 1:
+            if positionCurseur == 0:
+                # Reprendre la partie
+                pass
+            if positionCurseur == 1:
+                # Ouvrir les options
+                pass
+            if positionCurseur == 2:
+                exit()
+        
+        positionCurseur %= 3
+        arrowSpriteY = YPOS[positionCurseur%len(YPOS)]
+
+        createimage(console, "img/arrow.legba", arrowSpriteY, arrowSpriteX)
+        console.refresh()
 
 def createCheckElevator(console, sauvegarde, hard):
     XPOS = (26, 136)
@@ -884,7 +911,7 @@ def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLe
             else:
                 saveGame("save.yaml", levelId, "h_completed")
                 saveGame("save.yaml", levelId+1, "h_unlocked")
-            return "map/map_lobby.yaml", hard
+            return elevator(console), hard
         elif touch == 2:
             if arrive_play.is_playing() == True:
                 arrive_play.stop()
