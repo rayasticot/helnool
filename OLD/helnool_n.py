@@ -17,10 +17,17 @@ HALF_FOV = 28.75
 mouse = Controller()
 mouse.position = (800, 800)
 
-quality = 0
 limit_fps = False
 mouseMode = 1
 sensibility = 1.75
+
+
+def writePixel(console, color, y, x):
+    console.addch(y, x, " ",curses.color_pair(color))
+
+
+def refreshScreen(console):
+    console.refresh()
 
 
 def createOnPress(keyboard):
@@ -47,9 +54,11 @@ def createOnPress(keyboard):
                 keyboard["k_rg"] = 1
             elif key == pynput.keyboard.Key.left:
                 keyboard["k_le"] = 1
+            elif key == pynput.keyboard.Key.esc:
+                keyboard["k_es"] = 1
     return on_press
 
- 
+
 def createOnRelease(keyboard):
     def on_release(key):
         try:
@@ -74,8 +83,11 @@ def createOnRelease(keyboard):
                 keyboard["k_rg"] = 0
             elif key == pynput.keyboard.Key.left:
                 keyboard["k_le"] = 0
+            elif key == pynput.keyboard.Key.esc:
+                keyboard["k_es"] = 0
     return on_release
 
+"""
 
 def createimage(console, name, y, x):
     f = open(name, "rb")
@@ -90,7 +102,7 @@ def createimage(console, name, y, x):
                 continue
             if data[index-1] == 201:
                 continue
-            console.addch(col+y, lin+x, " ", curses.color_pair(data[index-1]))
+            writePixel(console, data[index-1], col+y, lin+x)
     f.close()
 
 
@@ -193,25 +205,20 @@ zakfront2 = loadtexture("img/zakfront2.legba")
 zakback0 = loadtexture("img/zakback0.legba")
 zaktoc0 = loadtexture("img/zaktoc0.legba")
 zaktoc1 = loadtexture("img/zaktoc1.legba")
-text_index = ((brique, brique_d), (toile, toile_d), (herb, herb_d), (filet, filet), (eye, eye_d), (labo, labo_d), (concrete, concrete_d), (box, box_d), (samsung, samsung_d), (keyhole, keyhole), (door, door), (induwall, induwall_d), (bloodwall, bloodwall_d), (colorwall, colorwall_d), (chickenwall, chickenwall_d), (chickenpanneau, chickenpanneau), (caisse, caisse_d), (icewall, icewall_d), (window, window), (backwall, backwall_d), (boxdark, boxdark_d), (boxlight, boxlight_d))
-simp_index = ((160, 124), (223, 180), (238, 237), (249, 239), (70, 71), (160, 124), (223, 180), (238, 237), (249, 239), (70, 71))
-sprite_tex_index = (peur1, peur2, peur3, cle, gun, peur4, courir, retour, bureautest, toilette, chickentable, pouletpend, toyota, zakfront0, zakfront1, zakfront2, zakback0, zaktoc0, zaktoc1)
-
-"""
-ganiouproche = sa.WaveObject.from_wave_file("snd/ganiou_proche.wav")
-ganiou = sa.WaveObject.from_wave_file("snd/ganiou.wav")
-ganiouend = sa.WaveObject.from_wave_file("snd/ganiou_end.wav")
-cle = sa.WaveObject.from_wave_file("snd/cle.wav")
-shot = sa.WaveObject.from_wave_file("snd/shot.wav")
-ganiouproche_play = ganiouproche.play()
-ganiouproche_play.stop()
-ganiou_play = ganiou.play()
-ganiou_play.stop()
-ganiouend_play = ganiouend.play()
-ganiouend_play.stop()
-shot_play = shot.play()
-shot_play.stop()
-"""
+text_index = (
+    (brique, brique_d), (toile, toile_d), (herb, herb_d),
+    (filet, filet), (eye, eye_d), (labo, labo_d),
+    (concrete, concrete_d), (box, box_d), (samsung, samsung_d),
+    (keyhole, keyhole), (door, door), (induwall, induwall_d),
+    (bloodwall, bloodwall_d), (colorwall, colorwall_d),
+    (chickenwall, chickenwall_d), (chickenpanneau, chickenpanneau),
+    (caisse, caisse_d), (icewall, icewall_d), (window, window),
+    (backwall, backwall_d), (boxdark, boxdark_d), (boxlight, boxlight_d)
+)
+sprite_tex_index = (
+    peur1, peur2, peur3, cle, gun, peur4, courir, retour, bureautest, toilette,
+    chickentable, pouletpend, toyota, zakfront0, zakfront1, zakfront2, zakback0, zaktoc0, zaktoc1
+)
 
 
 def normalize(vector):
@@ -253,9 +260,9 @@ def rayCast(mapData, rayAngle, startpointX, startpointY):
         positionX += direction[0]*travelDistance
     else:
         positionY += direction[1]*travelDistance
-    
+
     textureHit = mapData[int(positionY)][int(positionX)]-1
-    
+
     return distance, side, positionX, positionY, textureHit
 
 
@@ -268,22 +275,18 @@ def findPixelColor(mapData, pixelHeight, hitPositionX, hitPositionY, side, textu
         textureX = 0
         textureY = 0
         pixelColor = 0
-        if quality == 0:
-            if side == 0:
-                textureX = round((hitPositionY % 1)*63)
-            else:
-                textureX = round((hitPositionX % 1)*63)
+        if side == 0:
+            textureX = round((hitPositionY % 1)*63)
+        else:
+            textureX = round((hitPositionX % 1)*63)
 
-            textureY = round(((pixelHeight-wallStart)/wallSize)*(63*heightMultiplier))%64
+        textureY = round(((pixelHeight-wallStart)/wallSize)*(63*heightMultiplier))%64
 
-            if texture == 10 and (((pixelHeight-wallStart)/wallSize)*(63*heightMultiplier))/64 <= 10 and heightMultiplier != 1: # À chier
-                pixelColor = text_index[0][side][textureY][textureX]
-            else:
-                pixelColor = text_index[texture][side][textureY][textureX]
-                
-        elif quality == 1:
-            pixelColor = simp_index[texture][side]
-        
+        if texture == 10 and (((pixelHeight-wallStart)/wallSize)*(63*heightMultiplier))/64 <= 10 and heightMultiplier != 1: # À chier
+            pixelColor = text_index[0][side][textureY][textureX]
+        else:
+            pixelColor = text_index[texture][side][textureY][textureX]
+
         return pixelColor
 
 
@@ -300,10 +303,10 @@ def frame(console, mapData, posX, posY, angle, floorColor):
         scr_dist.append(fixDistance)
         wallSize = round(int(SY*1.5)/fixDistance)
         wallStart = round((SY-wallSize)/2)
-        
+
         for lin in range(SY):
             pixelColor = findPixelColor(mapData, lin, hitPositionX, hitPositionY, side, textureHit, wallStart, wallSize, wallStart+wallSize, 1, floorColor)
-            console.addstr(lin, col, " ", curses.color_pair(pixelColor))
+            writePixel(console, pixelColor, lin, col)
     return scr_dist
 
 
@@ -333,7 +336,7 @@ def frameWithHeight(console, mapData, heightmap, posX, posY, angle, floorColor):
 
         for lin in range(SY):
             pixelColor = findPixelColor(mapData, lin, hitPositionX, hitPositionY, side, textureHit, wallStart, wallSize, groundWallStart+groundWallSize, heightMultiplier, floorColor)
-            console.addstr(lin, col, " ", curses.color_pair(pixelColor))
+            writePixel(console, pixelColor, lin, col)
     return scr_dist
 
 
@@ -353,21 +356,21 @@ def drawsprite(console, sprite_list, posX, posY, angle, scr_dist):
         spr_angle = math.degrees(math.atan(dify/difx))
         if difx < 0:
             spr_angle += 180
-        
+
         dif_angle = angle + HALF_FOV - spr_angle
         if spr_angle > 270 and angle < 90:
             dif_angle += 360
         if angle > 270 and spr_angle < 90:
             dif_angle -= 360
         sprite_loc_list[i][4] = dif_angle
-        
+
         scale = round(256/sprite_loc_list[i][3])
         #(sprite_dir - player.a)*(fb.w/2)/(player.fov) + (fb.w/2)/2 - sprite_screen_size/2;
         #scr_x = round(((spr_list[i][4]*115)/FOV) + 57.5 - scale/2)
         scr_x = round((sprite_loc_list[i][4] * 4) - scale/2)
         scr_y = round((SY/2) - (scale/2))
         screen_spr_list.append([scr_x, scr_y, scale, sprite_loc_list[i][3], sprite_loc_list[i][5]])
-    
+
     for sprite in screen_spr_list:
         if sprite[2] > 400:
             continue
@@ -380,7 +383,7 @@ def drawsprite(console, sprite_list, posX, posY, angle, scr_dist):
                         pixcolor = sprite_tex_index[sprite[4]][tex_x][tex_y]
                         if pixcolor == 201:
                             continue
-                        console.addstr(lin+sprite[1], col+sprite[0], " ", curses.color_pair(pixcolor))
+                        writePixel(console, pixcolor, lin+sprite[1], col+sprite[0])
 
 
 def player(map, posx, posy, angle, sprintlevel, maxsprintlevel, dt, keyboard):
@@ -400,7 +403,7 @@ def player(map, posx, posy, angle, sprintlevel, maxsprintlevel, dt, keyboard):
 
     pdir = (math.cos(math.radians(angle)), math.sin(math.radians(angle)))
     rdir = (math.cos(math.radians(angle+90)), math.sin(math.radians(angle+90)))
-    
+
     if mouseMode == 1:
         mouseMoveX = mouse.position[0]-800
         mouse.position = (800, 400)
@@ -432,7 +435,7 @@ def player(map, posx, posy, angle, sprintlevel, maxsprintlevel, dt, keyboard):
 
     posx += addX
     posy += addY
-    
+
     if map[int(posy)][int(posx)] == 10:
         touch = 1
     elif map[int(posy)][int(posx)] == 19:
@@ -440,7 +443,7 @@ def player(map, posx, posy, angle, sprintlevel, maxsprintlevel, dt, keyboard):
     if map[int(posy)][int(posx)] > 0:
         posx -= addX
         posy -= addY
-    
+
     angle = angle % 360
 
     return posx, posy, angle, sprintlevel, maxsprintlevel, touch
@@ -477,9 +480,9 @@ def monster(monx, mony, posx, posy, pathMap, monsterspeed, anim_num, spr_list, d
 
     finder = AStarFinder()
     paths, runs = finder.find_path(start, end, grid)
-    
+
     monx, mony, endGame = followPath(paths, monx, mony, (1/monsterspeed)*26*dt)
-    
+
     spr_list[0][0] = monx+0.5
     spr_list[0][1] = mony+0.5
     anim_num += 1
@@ -493,19 +496,19 @@ def monster(monx, mony, posx, posy, pathMap, monsterspeed, anim_num, spr_list, d
     else:
         spr_list[0][5] = 2
 
-    
+
     if posx > monx-1 and posx < monx+1:
         if posy > mony-1 and posy < mony+1:
             endGame = True
-    
-    
+
+
     return monx, mony, anim_num, endGame
 
 
 def engineCinematic(console, fileName):
     with open(fileName) as f:
         cinematicInfo = yaml.safe_load(f)
-    
+
     with open(cinematicInfo["map_file_name"]) as f:
         mapFile = yaml.safe_load(f)
 
@@ -549,13 +552,13 @@ def engineCinematic(console, fileName):
             initialPosY = cinematicInfo["actors"][i][0]["pos_y"]
             sprList[actorIndex+i][0] = initialPosX + actorDir[i][0]*(elapsedTime/cinematicInfo["time"])
             sprList[actorIndex+i][1] = initialPosY + actorDir[i][1]*(elapsedTime/cinematicInfo["time"])
-            
+
             sprList[actorIndex+i][5] =  cinematicInfo["actors_frame"][i+1][int(elapsedTime/cinematicInfo["actors_frame"][0]["frequency"])%len(cinematicInfo["actors_frame"][i+1])]
 
         camX = cinematicInfo["cam"][0]["pos_x"] + camDir[0]*(elapsedTime/cinematicInfo["time"])
         camY = cinematicInfo["cam"][0]["pos_y"] + camDir[1]*(elapsedTime/cinematicInfo["time"])
 
-        console.refresh()
+        refreshScreen(console)
         dt = time.time()-t1
         elapsedTime += dt
         if elapsedTime >= cinematicInfo["time"]:
@@ -569,13 +572,13 @@ def ending(console, hard, keyboard):
     else:
         saveGame("save.yaml", 9, "h_completed")
         createimage(console, "img/endgamehard.legba", 0, 0)
-    console.refresh()
+    refreshScreen(console)
 
     while 1:
         if keyboard["k_en"] == 1:
             brouillage(console, 0.25, False)
             return "map/map_lobby.yaml", hard
-    
+
 
 def sprintbarupdate(console, maxsprintlevel, sprintlevel):
     for i in range(round(maxsprintlevel)):
@@ -584,16 +587,16 @@ def sprintbarupdate(console, maxsprintlevel, sprintlevel):
         else:
             couleur = 0
         for i_b in range(4):
-            console.addch(SY-i_b-1, i, " ", curses.color_pair(couleur))
+            writePixel(console, couleur, SY-i_b-1, i)
 
 
 def key(key_pool, spr_list, key_number, posx, posy, timerValue, monsterspeed):
-    cle = sa.WaveObject.from_wave_file("snd/cle.wav")
     for i in range(len(key_pool)):
         if spr_list[i+1][5] == -1:
             continue
         if posx > spr_list[i+1][0]-0.5 and posx < spr_list[i+1][0]+0.5:
             if posy > spr_list[i+1][1]-0.5 and posy < spr_list[i+1][1]+0.5:
+                cle = sa.WaveObject.from_wave_file("snd/cle.wav")
                 playcle = cle.play()
                 spr_list[i+1][5] = -1
                 key_number -= 1
@@ -603,8 +606,9 @@ def key(key_pool, spr_list, key_number, posx, posy, timerValue, monsterspeed):
                     timerValue = timerValue/2
                 monsterspeed -= 1
     return key_number, timerValue, monsterspeed
+"""
 
-
+"""
 def secondsToMinute(timeSeconds):
     leftMinutes = int(timeSeconds/60)
     leftSeconds = int(timeSeconds%60)
@@ -639,9 +643,9 @@ def createDigitSprite(console, minutes, seconds):
             for lin in range(8):
                 if chiffreTexture[col][lin+(digit*DIGIT_SIZE)] == 201:
                     continue
-                console.addch(col+DIGIT_POSY, lin+FIRST_DIGIT_POS+(8*i), " ", curses.color_pair(digitColor))
-    console.addch(DIGIT_POSY+4, FIRST_DIGIT_POS+8, " ", curses.color_pair(BLACK))
-    console.addch(DIGIT_POSY+9, FIRST_DIGIT_POS+8, " ", curses.color_pair(BLACK))
+                writePixel(console, digitColor, col+DIGIT_POSY, lin+FIRST_DIGIT_POS+(8*i))
+    writePixel(console, BLACK, DIGIT_POSY+4, FIRST_DIGIT_POS+8)
+    writePixel(console, BLACK, DIGIT_POSY+9, FIRST_DIGIT_POS+8)
 
 
 def createKeyNumbers(console, keyNumber, totalKeys):
@@ -662,13 +666,13 @@ def createKeyNumbers(console, keyNumber, totalKeys):
                 for lin in range(8):
                     if chiffreTexture[col][lin+(digit*DIGIT_SIZE)] == 201:
                         continue
-                    console.addch(col+DIGIT_POSY, lin+FIRST_DIGIT_POS+(8*i), " ", curses.color_pair(231))
+                    writePixel(console, 231, col+DIGIT_POSY, lin+FIRST_DIGIT_POS+(8*i))
         else:
             for col in range(13):
                 for lin in range(8):
                     if slashTexture[col][lin] == 201:
                         continue
-                    console.addch(col+DIGIT_POSY+1, lin+FIRST_DIGIT_POS+(8*i), " ", curses.color_pair(231))
+                    writePixel(console, 231, col+DIGIT_POSY+1, lin+FIRST_DIGIT_POS+(8*i))
 
 
 def createHand(console, monsterDistance):
@@ -695,12 +699,15 @@ def brouillage(console, seconds, helnool):
         for col in range(SY):
             for lin in range(SX):
                 pixcolor = random.randrange(231, 255)
-                console.addch(col, lin, " ", curses.color_pair(pixcolor))
+                writePixel(console, pixcolor, col, lin)
         if helnool == True:
             createimage(console, "img/helnool.legba", 0, 55)
-        console.refresh()
+        refreshScreen(console)
     if play.is_playing():
         play.stop()
+
+
+
 
 
 def gunCheckCollision(gunx, guny, posx, posy):
@@ -732,37 +739,51 @@ def gun(console, levelMap, spr_list, posx, posy, angle, monx, mony, gunsoundplay
     if keyboard["k_en"] == 1 and gunsoundplay.is_playing() == False:
         keyboard["k_en"] = 0
         gunsoundplay = gunsound.play()
-    
+
         return shootBullet(levelMap, posx, posy, angle, monx, mony), gunsoundplay
     return 0, gunsoundplay
 
-def menu(console, keyboard):
+
+
+
+
+def settingsMenu(console, keyboard):
+    pass
+
+
+def menu(console, keyboard, pause):
     positionCurseur = 0
-    XPOS = 82
-    YPOS = (46, 67, 89)
+    XPOS = 66
+    YPOS = (37, 59, 81)
     arrowSpriteX = XPOS
     arrowSpriteY = YPOS[0]
     while 1:
-        createimage(console, "img/pause.legba", 0, 0)
+        createimage(console, "img/menu.legba", 0, 0)
+        if pause == True:
+            createimage(console, "img/pause.legba", 9, 80)
         if keyboard["k_up"] == 1:
             positionCurseur -= 1
+            keyboard["k_up"] = 0
         if keyboard["k_dw"] == 1:
             positionCurseur += 1
+            keyboard["k_dw"] = 0
         if keyboard["k_en"] == 1:
+            keyboard["k_en"] = 0
             if positionCurseur == 0:
                 # Reprendre la partie
-                pass
+                return
             if positionCurseur == 1:
                 # Ouvrir les options
                 pass
             if positionCurseur == 2:
                 exit()
-        
+
         positionCurseur %= 3
         arrowSpriteY = YPOS[positionCurseur%len(YPOS)]
 
         createimage(console, "img/arrow.legba", arrowSpriteY, arrowSpriteX)
-        console.refresh()
+        refreshScreen(console)
+
 
 def createCheckElevator(console, sauvegarde, hard):
     XPOS = (26, 136)
@@ -818,7 +839,7 @@ def elevator(console, keyboard):
         if keyboard["k_up"] == 1:
             keyboard["k_up"] = 0
             arrowIndex += 1
-        
+
         if keyboard["k_dw"] == 1:
             keyboard["k_dw"] = 0
             arrowIndex -= 1
@@ -826,7 +847,7 @@ def elevator(console, keyboard):
         if keyboard["k_rg"] == 1:
             keyboard["k_rg"] = 0
             arrowIndex += len(YPOS)
-        
+
         if keyboard["k_le"] == 1:
             keyboard["k_le"] = 0
             arrowIndex -= len(YPOS)
@@ -841,7 +862,7 @@ def elevator(console, keyboard):
             if arrowIndex == 10:
                 if play.is_playing() == True:
                     play.stop()
-                hard = not(hard)
+                hard = not hard
                 if hard == True:
                     musique = sa.WaveObject.from_wave_file("snd/ascenseurfeu.wav")
                     play = musique.play()
@@ -865,7 +886,10 @@ def elevator(console, keyboard):
             arrowSpriteY = YPOS[arrowIndex%len(YPOS)]
 
         createimage(console, "img/arrow.legba", arrowSpriteY, arrowSpriteX-21)
-        console.refresh()
+        refreshScreen(console)
+
+
+"""
 
 
 def safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, keyboard):
@@ -878,10 +902,10 @@ def safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, spri
         sprintbarupdate(console, maxSprintLevel, sprintLevel)
         if touchElevator == 1:
             return elevator(console, keyboard)
-        console.refresh()
+        refreshScreen(console)
         dt = time.time()-ti
         if limit_fps == True:
-            if(dt < 0.033333):
+            if dt < 0.033333:
                 time.sleep(0.033333-dt)
 
 
@@ -895,7 +919,7 @@ def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLe
     oldPlayerPosY = playerPosY
 
     dt = 0
-    
+
     while 1:
         ti = time.time()
         screenWallDistance = frame(console, levelMap, playerPosX, playerPosY, playerAngle, (238, 240))
@@ -904,14 +928,13 @@ def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLe
         if touch == 1 and (keyNumber == 0) and levelId != 9:
             if arrive_play.is_playing() == True:
                 arrive_play.stop()
-            brouillage(console, 0.25, False)
             if hard == False:
                 saveGame("save.yaml", levelId, "completed")
                 saveGame("save.yaml", levelId+1, "unlocked")
             else:
                 saveGame("save.yaml", levelId, "h_completed")
                 saveGame("save.yaml", levelId+1, "h_unlocked")
-            return elevator(console), hard
+            return elevator(console, keyboard)
         elif touch == 2:
             if arrive_play.is_playing() == True:
                 arrive_play.stop()
@@ -939,10 +962,10 @@ def levelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLe
                     timerValue = 0
         elif monsterActivate == False:
             monsterActivate = True
-        console.refresh()
+        refreshScreen(console)
         pre_dt = time.time()-ti
         if limit_fps == True:
-            if(pre_dt < 0.033333):
+            if pre_dt < 0.033333:
                 time.sleep(0.033333-pre_dt)
         dt = time.time()-ti
 
@@ -988,10 +1011,10 @@ def outsideLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, s
                 brouillage(console, 2, True)
                 return "map/map_dehors.yaml", hard
         console.addstr(123, 30, str(monsterPosX))
-        console.refresh()
+        refreshScreen(console)
         dt = time.time()-ti
         if limit_fps == True:
-            if(dt < 0.033333):
+            if dt < 0.033333:
                 time.sleep(0.033333-dt)
 
 
@@ -1012,7 +1035,7 @@ def level(console, levelFileName, hard, keyboard):
     levelMap = loadtexture(mapFile["map_data_file"])
     pathMap = map2pathmap(mapFile["map_data_file"])
     timerValue = mapFile["monstre_spawn_time"]
-    
+
     if mapFile["monstre_spawn_time"] == -2:
         monsterSpeed = mapFile["monster_speed_init"]
         levelPathMap = map2pathmap(mapFile["map_data_file"])
@@ -1039,28 +1062,28 @@ def level(console, levelFileName, hard, keyboard):
         return safeLevelUpdate(console, levelMap, playerPosX, playerPosY, playerAngle, sprintLevel, maxSprintLevel, spriteList, keyboard)
 
 
+"""
+
 def title(console, keyboard):
     musique = sa.WaveObject.from_wave_file("snd/helpeur.wav")
     play = musique.play()
     createimage(console, "img/title.legba", 0, 0)
     createimage(console, "img/t0.legba", 9, 2)
-    console.refresh()
+    refreshScreen(console)
     frameindex = 1
     while 1:
-        if quality == 0:
-            createimage(console, f"img/t{frameindex}.legba", 9, 2)
-            console.refresh()
-            time.sleep(0.03333)
-            frameindex += 1
-            if frameindex == 5:
-                frameindex = 0
+        createimage(console, f"img/t{frameindex}.legba", 9, 2)
+        refreshScreen(console)
+        time.sleep(0.03333)
+        frameindex += 1
+        if frameindex == 5:
+            frameindex = 0
         if play.is_playing() != True:
             play = musique.play()
         if keyboard["k_en"] == 1:
             play.stop()
             console.clear()
             break
-        console.addch(SY+1, SX+1, " ")
 
 
 def playSmallCinematic(console):
@@ -1077,6 +1100,9 @@ def playFullCinematic(console):
     playSmallCinematic(console)
 
 
+"""
+
+
 def main(console):
     scr_size = console.getmaxyx()
     if scr_size[0] < SY or scr_size[1] < SX:
@@ -1084,7 +1110,7 @@ def main(console):
         print(f"Votre terminal doit avoir une résolution d'au moins {SX} de largeur par {SY} de hauteur.")
         print(f"Votre résolution actuelle est de {scr_size[1]} de largeur par {scr_size[0]} de hauteur.")
         exit()
-    
+
     console.clear()
     console.nodelay(True)
     curses.noecho()
@@ -1099,7 +1125,8 @@ def main(console):
         "k_le": 0,
         "k_rg": 0,
         "k_en": 0,
-        "k_sf": 0
+        "k_sf": 0,
+        "k_es": 0
     }
 
     listener = pynput.keyboard.Listener(on_press=createOnPress(keyboard), on_release=createOnRelease(keyboard))
@@ -1107,7 +1134,9 @@ def main(console):
 
     title(console, keyboard)
     brouillage(console, 0.25, False)
-    
+    menu(console, keyboard, False)
+    brouillage(console, 0.25, False)
+
     with open("save.yaml") as f:
         savedata = yaml.safe_load(f)
         if savedata[0]["completed"] == True or savedata[2]["completed"] == True:
@@ -1117,7 +1146,7 @@ def main(console):
 
     newLevel = "map/map_lobby.yaml"
     hard = False
-    
+
     while 1:
         newLevel, hard = level(console, newLevel, hard, keyboard)
 
